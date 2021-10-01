@@ -1,0 +1,23 @@
+﻿input, textarea {
+    outline: none;
+}
+
+input:active, textarea:active {
+    outline: none;
+}
+
+:focus {
+    outline: none;
+}
+
+textarea {
+    resize: none;
+}
+
+textarea {
+    resize: vertical;
+}
+
+textarea {
+    resize: horizontal;
+}
