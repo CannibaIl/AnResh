@@ -26,11 +26,11 @@
                 $('#table').append(
                     `<tbody>${data.map(d =>
                         `<tr>
-                                    <td>
-                                        <a href="/employees/${d.id}">${d.name}</a>
-                                    </td>
-                                 </tr>`).join('')}
-                        </tbody>`
+                            <td>
+                                <a href="/employees/${d.id}">${d.name}</a>
+                            </td>
+                        </tr>`).join('')}
+                    </tbody>`
                 );
 
             }).fail(function (xhr) {
