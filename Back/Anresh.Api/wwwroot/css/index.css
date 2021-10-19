@@ -1,23 +1,8 @@
-﻿input, textarea {
-    outline: none;
-}
-
-input:active, textarea:active {
-    outline: none;
-}
-
-:focus {
-    outline: none;
-}
-
-textarea {
-    resize: none;
-}
-
-textarea {
-    resize: vertical;
-}
-
-textarea {
-    resize: horizontal;
+﻿
+.modal {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%,-40%) !important;
+    width: 100% !important;
 }

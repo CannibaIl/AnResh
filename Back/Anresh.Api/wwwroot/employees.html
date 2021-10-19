@@ -1,79 +1,389 @@
-﻿<!DOCTYPE html>
+﻿
+<!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8" />
-    <title>Employees</title>    
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <title>Employees</title>
     <link rel="stylesheet" href="../css/index.css" type="text/css" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    
+    <script src="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/noty.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/noty.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/themes/sunset.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+            crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script src='../js/knockout-3.5.1.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/knockstrap@1.4.1/build/knockstrap.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/knockout.validation@2.0.4/dist/knockout.validation.min.js"></script>
+
 </head>
+
 <body>
-    <header>
-    </header>
+    <!-- #include "header.html" -->
+    <div class="loader mt-3" data-bind="hidden: true">
+        <h1>Loading...</h1>
+    </div>
+    <div id="content" class="container mt-3" style="display: none" data-bind="visible: true">
 
-    <div id="error" class="container alert alert-danger mt-3" style="display: none"></div>
+        <button class="btn btn-primary mb-3" data-bind="click: addEmployee">
+            Add Employee
+        </button>
+        <button class="btn btn-danger mb-3" data-bind="visible: selectedEmployees().length ,click: deleteSelectedEmployees">
+            Delete selected
+        </button>
 
-    <div id="content" class="container mt-3" style="display: none">
-        <table id="table" class="table table-bordered">
+        <table data-bind="if: hasEmployees" id="table" class="table table-bordered">
             <thead>
                 <tr>
-                    <th scope="col">Id</th>
+                    <th scope="col"></th>
                     <th scope="col">FirstName</th>
                     <th scope="col">LastName</th>
                     <th scope="col">MidleName</th>
-                    <th scope="col">DepartmentID</th>
+                    <th scope="col">Department</th>
                     <th scope="col">Salary</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <thead data-bind="foreach: employeeList">
+                <tr id="employees-table">
+                    <td scope="col">
+                        <input class="delete-employee-checkbox" type="checkbox" data-bind="checked: $root.selectedEmployees, value: $data" />
+                    </td>
+                    <td data-bind="text: lastName" scope="col"></td>
+                    <td data-bind="text: firstName" scope="col"></td>
+                    <td data-bind="text: midleName" scope="col"></td>
+                    <td data-bind="text: department.name" scope="col"></td>
+                    <td data-bind="text: salary" scope="col"></td>
+                    <td>
+                        <button type="button" class="btn btn-primary mb-3"
+                                data-bind="click: $parent.editEmployee">
+                            Edit
+                        </button>
+                        <button type="button" class="btn btn-danger mb-3"
+                                data-bind="click: $parent.deleteEmployee">
+                            Delete
+                        </button>
+                    </td>
                 </tr>
             </thead>
         </table>
+        <p data-bind="visible: !hasEmployees()">Employees not found</p>
     </div>
 
-    <script>
+    <div style="display: none;" class="modal fade modal-dialog modal-dialog-centered modal-dialog-scrollable"
+            data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+            aria-hidden="true" data-bind="modal: {
+                visible: editEmployeeDialogVisible,
+                header: { name: 'editEmployeeHeaderTemplate', data: { label: editEmployeeTitle } },
+                body: { name: 'editEmployeeBodyTemplate', data: editEmployeeData }
+            }">
+    </div>
 
-        function getEmployeesList(requestUrl) {
-            $.get(requestUrl, function (data) {
-                if ($.isEmptyObject(data)) {
-                    $('#error').text("not found").slideDown();
+    <script type="text/html" id="editEmployeeHeaderTemplate">
+        <h5 class="modal-title" data-bind="text: label"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </script>
+    <script type="text/html" id="editEmployeeBodyTemplate">
+        <form data-bind="with: target">
+            <div class="form-floating mb-3">
+                <input data-bind="value: lastName, class: lastName.isValid() ? 'is-valid' : 'is-invalid'" type="text" class="form-control">
+                <label>lastName</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input data-bind="value: firstName, class: firstName.isValid() ? 'is-valid' : 'is-invalid'" type="text" class="form-control">
+                <label>firstName</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input data-bind="value: midleName, class: midleName.isValid() ? 'is-valid' : 'is-invalid'" type="text" class="form-control">
+                <label>midleName</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input data-bind="value: salary, class: salary.isValid() ? 'is-valid' : 'is-invalid'" type="number" class="form-control">
+                <label>salary</label>
+            </div>
+            <div class="form-floating mb-3">
+                <select class="form-select " data-bind="class: department.id.isValid() ? 'is-valid' : 'is-invalid',
+                                                        options: $parent.departmentList,
+                                                        optionsText: 'name',
+                                                        optionsValue: 'id',
+                                                        value: department.id,
+                                                        optionsCaption: 'select department',
+                                                        valueAllowUnset: true
+                                                        ">
+                </select>
+                <label>department</label>
+            </div>
+
+            <button class="btn btn-success mt-3" data-bind="text: $root.saveButtonTitle,
+                                                            click: $root.handleSaveButton,
+                                                            enable: validationModel.isValid"
+                                                            />
+        </form>
+    </script>
+
+    <script>
+        
+        function notify(options) {
+            new Noty({
+                type: options.type,
+                text: options.text,
+                timeout: options.type === 'error' ? 30000 : 10000,
+                layout: 'bottomRight',
+                theme: 'sunset',
+                progressBar: true,
+                closeWith: ['click'],
+            }).show();
+        }
+
+        function notifyInfo(text) {
+            notify({ type: 'success', text: text })
+        }
+
+        function notifyWarning(text) {
+            notify({ type: 'warning', text: text })
+        }
+
+        function notifyError(text) {
+            notify({ type: 'error', text: text })
+        }
+
+        function notifyAjaxError(xhr) {
+            const msg = 'A server communication error occured. Server returns response code ' + xhr.status;
+            notifyError(msg);
+        }
+
+        function confirmDialog(text, callback) {
+            const n = new Noty({
+                layout: 'topRight',
+                theme: 'sunset',
+                type: 'alert',
+                text: `<p>${text}</p>`,
+                buttons: [
+                    Noty.button('YES', 'btn btn-success', function () {
+                        callback();
+                        n.close();
+                    }, { id: 'button1', 'data-status': 'ok' }),
+
+                    Noty.button('NO', 'btn btn-danger', function () {
+                        n.close();
+                    })
+                ]
+            });
+            n.show();
+        }
+
+        function getEmployees() {
+            const baseUrl = window.location.href;
+            const departamentId = baseUrl.substring(baseUrl.lastIndexOf('/') + 1);
+            const url = isNaN(departamentId) || departamentId == "" ? "/api/employee" : "/api/employee/department/" + departamentId;
+            return $.ajax({
+                url: url,
+                type: 'GET',
+                error: function (xhr) {
+                    notifyAjaxError(xhr);
                 }
-                else {
-                    $('#table').append(
-                        `<tbody>${data.map(e =>
-                            `<tr>
-                                <th scope="row">${e.id}</td>
-                                <td>${e.firstName}</td>
-                                <td>${e.lastName}</td>
-                                <td>${e.midleName}</td>
-                                <td>${e.departmentId}</td>
-                                <td>${e.salary} $</td>
-                             </tr>`).join('')}
-                        </tbody>`
-                    );
-                    $('#content').css('display', 'block')
-                }
-            }).fail(function (xhr) {
-                var msg = 'A server communication error occured. Server returns response code ' + xhr.status;
-                displayError(msg);
             });
         }
 
+        function getDepartments() {
+            return $.ajax({
+                url: '/api/department/light',
+                type: 'GET',
+                error: function (xhr) {
+                    notifyAjaxError(xhr);
+                }
+            })
+        }
+
+        function EmployeeViewModel(data) {
+            let self = this;
+            let employee = data || {};
+
+            this.id = employee.id || '';
+            this.firstName = ko.observable(employee.firstName || '').extend({
+                required: true,
+                maxLength: 20
+            });
+            this.lastName = ko.observable(employee.lastName || '').extend({
+                required: true,
+                maxLength: 20
+            });
+            this.midleName = ko.observable(employee.midleName || '').extend({
+                required: true,
+                maxLength: 20
+            });
+            this.salary = ko.observable(employee.salary || '').extend({
+                required: true,
+            });
+
+            this.department = new DepartmentViewModel(employee.department);
+
+            this.fullName = ko.pureComputed(function () {
+                return self.lastName() + ' ' + self.firstName() + ' ' + self.midleName();
+            })
+
+            this.validationModel = ko.validatedObservable({
+                firstName: this.firstName,
+                lastName: this.lastName,
+                midleName: this.midleName,
+                salary: this.salary,
+                department: this.department
+            });
+        }
+
+        function DepartmentViewModel(data) {
+            data = data || {};
+            this.id = ko.observable(data.id || '').extend({
+                required: true
+            });
+            this.name = data.name || '';
+
+            this.validationModel = ko.validatedObservable({
+                id: this.id
+            });
+        }
+
+        function FormViewModel(data) {
+            let self = this;
+
+            this.target = data;
+
+            this.departmentList = ko.observableArray();
+            getDepartments().then(data => {
+                self.departmentList(ko.utils.arrayMap(data, function (e) {
+                        return new DepartmentViewModel(e);
+                    })
+                );
+            });
+        }
+
+        function PageViewModel(data) {
+            let self = this;
+
+            const employeeList = ko.utils.arrayMap(data, function (e) {
+                return new EmployeeViewModel(e);
+            });
+            this.employeeList = ko.observableArray(employeeList);
+            this.hasEmployees = ko.pureComputed(function () {
+                return self.employeeList().length ? true : false;
+            })
+            this.editEmployeeDialogVisible = ko.observable(false);
+            this.editEmployeeMode = ko.observable();
+            this.editEmployeeTitle = ko.pureComputed(function () {
+                return self.editEmployeeMode() === 'create' ? 'Create Employee' : 'Edit Employee';
+            });
+            this.saveButtonTitle = ko.pureComputed(function () {
+                return self.editEmployeeMode() === 'create' ? 'Create' : 'Save';
+            });
+            this.editEmployeeData = ko.observable(new FormViewModel(new EmployeeViewModel()));
+
+            this.addEmployee = function () {
+                self.editEmployeeMode('create');
+                self.editEmployeeData(new FormViewModel(new EmployeeViewModel()));
+                self.editEmployeeDialogVisible(true);
+            }
+
+            let targetEmployee;
+            this.editEmployee = function (data) {
+                targetEmployee = data;
+                self.editEmployeeMode('edit');
+                self.editEmployeeData(new FormViewModel(new EmployeeViewModel(ko.toJS(data))));
+                self.editEmployeeDialogVisible(true);
+            }
+
+            this.handleSaveButton = function (employee) {
+                const payload = {
+                    id: employee.id ? employee.id : undefined,
+                    firstName: employee.firstName(),
+                    lastName: employee.lastName(),
+                    midleName: employee.midleName(),
+                    departmentId: employee.department.id(),
+                    salary: employee.salary()
+                };
+
+                $.ajax({
+                    contentType: 'application/json',
+                    url: '/api/employee/',
+                    type: self.editEmployeeMode() === 'create' ? 'POST' : 'PUT',
+                    data: ko.toJSON(payload),
+                    success: function (data) {
+                        self.editEmployeeMode() === 'create' ?
+                            self.employeeList.push(new EmployeeViewModel(data.response)) :
+                            self.employeeList.replace(targetEmployee, new EmployeeViewModel(data))
+                        notifyInfo(`Employee ${data.fullName} has been saved`);
+                    },
+                    error: function (xhr) {
+                        notifyAjaxError(xhr);
+                    }
+                }).then(function () {
+                    self.editEmployeeDialogVisible(false);
+                });
+            }
+
+            this.selectedEmployees = ko.observableArray();
+            this.deleteSelectedEmployees = function () {
+                const ids = ko.utils.arrayMap(self.selectedEmployees(), function (e) {
+                    return e.id;
+                });
+                confirmDialog(`Do you really want to delete ${ids.length} employees?`, function() {
+                    $.ajax({
+                        headers: { 'Content-Type': 'application/json' },
+                        url: '/api/employee/deleteList',
+                        type: 'DELETE',
+                        data: JSON.stringify(ids),
+                        success: function () {
+                            const employees = ko.utils.arrayFilter(self.employeeList(), function (e) {
+                                return self.selectedEmployees.indexOf(e) === -1;
+                            });
+                            self.selectedEmployees([]);
+                            self.employeeList(employees);
+                            notifyWarning(`Deleted ${ids.length} employees`);
+                        }, error: function (xhr) {
+                            notifyAjaxError(xhr);
+                        }
+                    });
+                })
+            }
+
+            this.deleteEmployee = function (data) {
+                confirmDialog(`Do you really want to delete</br>${data.fullName()}?`, function () {
+                    $.ajax({
+                        contentType: 'application/json',
+                        url: '/api/employee/',
+                        type: 'DELETE',
+                        data: JSON.stringify(ko.toJS(data.id)),
+                        success: function () {
+                            self.employeeList.remove(data);
+                            notifyWarning(`Deleted: ${data.fullName()}`);
+                        }, error: function (xhr) {
+                            notifyAjaxError(xhr);
+                        }
+                    });
+                })
+            }
+        }
+        
         $(document).ready(function () {
-            $("header").load('../pageComponents/header.html');
+            ko.validation.init({
+                decorateInputElement: true,
+                //errorElementClass: 'has-error',
+                insertMessages: true,
+                grouping: {
+                   deep: true,
+                   live: true,
+                   observable: true
+                }
+            });
 
-            var baseUrl = (window.location).href;
-            var departamentId = baseUrl.substring(baseUrl.lastIndexOf('/') + 1);
-
-            if (isNaN(departamentId) || departamentId == "") {
-                getEmployeesList('/api/employee');
-            }
-            else {
-                getEmployeesList('/api/employee/department/' + departamentId);
-            }
-
+            getEmployees().then(data => {
+                ko.applyBindings(new PageViewModel(data));
+            });
         });
-
     </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </body>
+
 </html>

@@ -4,46 +4,152 @@
 <head>
     <meta charset="utf-8" />
     <title>File</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
     <link rel="stylesheet" href="../css/index.css" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/noty.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/noty.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/themes/sunset.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script src='../js/knockout-3.5.1.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/knockstrap@1.4.1/build/knockstrap.js"></script>
 </head>
 
 <body>
 
-    <header>
-    </header>
+    <!-- #include "header.html" -->
 
     <div id="content" class="container mt-3">
-        <div id="error" class="alert alert-danger" style="display: none"></div>
-        <div id="saved-success" class="alert alert-success" style="display: none">File saved successfully</div>
-
-        <form id="form">
             <div class="btn-group mb-3">
-                <input type="button" class="updateFile btn btn-primary" onclick="readFile()" value="Обновить файл" />
-                <input type="submit" class="btn btn-success" value="Сохранить изменения" />
+                <button data-bind="click: $root.saveFile" class="btn btn-success shadow-none mt-3">Save</button>
+                <button data-bind="click: $root.updateFile" class="btn btn-warning shadow-none mt-3">Update</button>
             </div>
-
-            <textarea multiple class="form-control mb-3" id="text" type="text" name="text"
-                      style="height: 70vh; overflow-y: scroll;"></textarea>
-        </form>
+            <textarea data-bind="value: text" class="form-control shadow-none mb-3" type="text" style="height: 70vh; overflow-y: scroll; overflow-x: hidden;"></textarea>
     </div>
 
+
     <script>
+        function showNotification(type, text) {
+            new Noty({
+                type: type,
+                text: text,
+                timeout: type === 'error' ? '5000' : '1000',
+                layout: 'bottomRight',
+                theme: 'sunset',
+                progressBar: true,
+                closeWith: ['click'],
+            }).show();
+        }
+
+
+        function PageViewModel() {
+            let self = this;
+
+            this.text = ko.observable();
+            this.latestСhange = ko.observable();
+
+            getText().then(data => {
+                self.text(data);
+                self.latestСhange(data);
+            });
+
+            this.saveFile = function (data) {
+                getText().then(data => {
+                    if (data !== self.latestСhange()) {
+                        const n = new Noty({
+                            layout: 'topRight',
+                            theme: 'sunset',
+                            type: 'alert',
+                            text: `<span>The file has been changed, <br />  do you want to overwrite it?</span>`,
+                            buttons: [
+                                Noty.button('YES', 'btn btn-success', function () {
+                                    saveText(self.text())
+                                    n.close();
+                                }, { id: 'button1', 'data-status': 'ok' }),
+
+                                Noty.button('NO', 'btn btn-danger', function () {
+                                    n.close();
+                                }),
+                                Noty.button('UPDATE', 'btn btn-warning', function () {
+                                    getText().then(data => {
+                                        self.text(data);
+                                        n.close();
+                                    });
+                                })
+                            ]
+                        });
+                        n.show();
+                    }
+                    else {
+                        saveText(self.text());
+                    }
+                    self.latestСhange(data);
+                });
+                
+            }
+            this.updateFile = function()  {
+                getText().then(data => {
+                    self.text(data);
+                });
+                showNotification('info', 'File updated!');
+            }
+        }
+        function getText() {
+            return $.ajax({
+                url: '/api/file/',
+                type: 'GET',
+                error: function (xhr) {
+                    var msg = 'A server communication error occured. Server returns response code ' + xhr.status;
+                    showNotification('error', msg);
+                }
+            })
+        }
+
+        function saveText(data) {
+            $.ajax({
+                url: '/api/file/',
+                type: 'POST',
+                data: `text=${data}`,
+                success: function () {
+                    showNotification('success', 'Saves changed!');
+                },
+                error: function (xhr) {
+                    var msg = 'A server communication error occured. Server returns response code ' + xhr.status;
+                    showNotification('error', msg);
+                }
+            })
+        }
+        $(document).ready(function () {
+            ko.applyBindings(new PageViewModel());
+        });
+    </script>
+
+    <!-- <script>
 
         $("#form").submit(function (e) {
             e.preventDefault();
             hideAlerts();
             var form_data = $(this).serialize();
-            $.post('/api/file', form_data)
-                .done(function () {
+
+            $.ajax({
+                url: '/api/file',
+                type: 'POST',
+                data: form_data,
+                success: function (data) {
                     displaySuccess();
-                })
-                .fail(function (xhr) {
+                },
+                error: function (xhr) {
+                    console.log(xhr);
                     var msg = 'A server communication error occured. Server returns response code ' + xhr.status;
                     displayError(msg);
-                });
+                },
+                dataType: "json",
+                contentType: "application/json"
+            });
         });
 
         $('#refresh-btn').click(function () {
@@ -75,7 +181,7 @@
         }
 
         $(document).ready(function () {
-            $("header").load('../pageComponents/header.html');
+           
             readFile();
         });
 
@@ -86,7 +192,7 @@
             crossorigin="anonymous">
 
 
-    </script>
+    </script> -->
 </body>
 
 </html>

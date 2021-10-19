@@ -1,52 +1,417 @@
-﻿<!DOCTYPE html>
+
+<!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8" />
-    <title>Home</title>    
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <title>Departaments</title>
     <link rel="stylesheet" href="../css/index.css" type="text/css" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    
+    <script src="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/noty.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/noty.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/themes/sunset.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+
+    <script src='../js/knockout-3.5.1.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/knockstrap@1.4.1/build/knockstrap.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/knockout.validation@2.0.4/dist/knockout.validation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/knockout.merge/src/knockout.merge.js"></script>
+
 </head>
+
 <body>
 
-    <header>
-    </header>
+    <!-- #include "header.html" -->
 
-    <div id="content" class="container mt-3">
-        <table id="table" class="table table-bordered">
-        </table>
+    <div class="loader mt-3" data-bind="hidden: true">
+        <h1>Loading...</h1>
     </div>
+   
+    <div id="content" class="container mt-3" style="display: none" data-bind="visible: true">
 
-    <script>
+        <div style="display: none;" class="modal fade modal-dialog modal-dialog-centered modal-dialog-scrollable"
+            data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+            aria-hidden="true" data-bind="modal: {
+                visible: visibleDepartmentBodyTemplate,
+                header: { name: 'departmentHeaderTemplate', data: { label: departmentTitle } },
+                body: { name: departmentModalBodyTemplate, data: formData },
+                footer: { name: 'departmentFooterTemplate', data: formData }
+                }">
+        </div>
 
-        function getDepartamentList() {
-            $.get('/api/departament', function (data) {
+        <script type="text/html" id="departmentHeaderTemplate">
+            <h5 class="modal-title" data-bind="text: label"></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </script>
 
-                $('#table').append(
-                    `<tbody>${data.map(d =>
-                        `<tr>
-                            <td>
-                                <a href="/employees/${d.id}">${d.name}</a>
-                            </td>
-                        </tr>`).join('')}
-                    </tbody>`
-                );
+        <script type="text/html" id="departmentFooterTemplate">
+            <button class="btn mt-3" data-bind="text: $root.formButtonTitle, 
+                                                            click: $root.handleButton,
+                                                            enable: currentDepartmentData().validationModel.isValid(),
+                                                            class: departmentModalMode() === 'delete' ? 'btn-danger' : 'btn-success'
+                                                            "/>
+        </script>
 
-            }).fail(function (xhr) {
-                var msg = 'A server communication error occured. Server returns response code ' + xhr.status;
-                displayError(msg);
-            });
-        }
-
-        $(document).ready(function () {
-            $("header").load('../pageComponents/header.html');
-            getDepartamentList();
-        });
-
+        <!-- Edit/Create -->
+        <script type="text/html" id="editDepartmentBodyTemplate">
+        <form >
+            <div class="form-floating mb-3">
+                <input data-bind="value: currentDepartmentData().name, class: currentDepartmentData().name.isValid() ? 'is-valid' : 'is-invalid' " type="text" class="form-control">
+                <label>name</label>
+            </div>
+        </form>
     </script>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+        <!-- Delete -->
+        <script type="text/html" id="deleteDepartmentBodyTemplate">
+            <form class="was-validated">    
+                <div>
+                    <div data-bind="if: hasEmployeeList">
+                        <div class="form-check">
+                            <label><input class="form-check-input" type="radio" value="delete" data-bind="checked: radioSelected" required/>Delete employees</label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <label><input class="form-check-input" type="radio" value="transfer" data-bind="checked: radioSelected" required/>Transfer employees</label>
+                        </div>
+                        <div class="form-floating mb-3">
+
+                            <select class="form-select" required 
+                                    data-bind=" visible: radioSelected() === 'transfer',
+                                                options: targetDepartments, 
+                                                optionsText: 'name',
+                                                value: targetDepartment,
+                                                optionsCaption: 'select department'">
+                            </select>
+                        </div>
+                        <table id="table" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Last name</th>
+                                    <th scope="col">First name</th>
+                                    <th scope="col">Midle name</th>
+                                    <th scope="col">Salary</th>
+                                </tr>
+                            </thead>
+                            <thead data-bind="foreach: currentDepartmentData().employees">
+                                <tr>
+                                    <td data-bind="text: lastName" scope="col"></td>
+                                    <td data-bind="text: firstName" scope="col"></td>
+                                    <td data-bind="text: midleName" scope="col"></td>
+                                    <td data-bind="text: salary" scope="col"></td>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+                <div data-bind="if: !hasEmployeeList()"><span>Employees not found</span></div>               
+            </form>
+        </script>
+
+        <button class="btn btn-primary mb-3" data-bind="click: addDepartment">Add Department</button>
+
+        <table id="table" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">Id</th>
+                    <th scope="col">Name</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <thead data-bind="foreach: departmentList">
+                <tr>
+                    <td scope="col" data-bind="text: id, click:  $root.goToEmployees"></td>
+                    <td scope="col" data-bind="text: name, click:  $root.goToEmployees"></td>
+                    <td>
+                        <button type="button" class="btn btn-primary mb-3" data-bind="click: $root.editDepartment">Edit
+                        </button>
+                        <button button type="button" class="btn btn-danger mb-3"
+                            data-bind="click: $root.deleteDepartment">Delete</button>
+                    </td>
+                </tr>
+            </thead>
+        </table>
+    </div>
+
+
+    <script>
+
+        function notify(options) {
+            new Noty({
+                type: options.type,
+                text: options.text,
+                timeout: options.timeout || 1000,
+                layout: 'bottomRight',
+                theme: 'sunset',
+                progressBar: true,
+                closeWith: ['click'],
+            }).show();
+        }
+
+        function notifyInfo(text) {
+            notify({ type: 'success', text: text })
+        }
+        function notifyWarning(text) {
+            notify({ type: 'warning', text: text })
+        }
+        function notifyError(text) {
+            notify({ type: 'error', text: text })
+        }
+
+        function notifyAjaxError(xhr) {
+            const msg = 'A server communication error occured. Server returns response code ' + xhr.status;
+            notifyError(msg);
+        }
+
+        function confirmDeleteEmployee(text, callback) {
+            const n = new Noty({
+                layout: 'topRight',
+                theme: 'sunset',
+                type: 'alert',
+                text: `<p>${text}</p>`,
+                buttons: [
+                    Noty.button('YES', 'btn btn-success', function () {
+                        callback();
+                        n.close();
+                    }, { id: 'button1', 'data-status': 'ok' }),
+
+                    Noty.button('NO', 'btn btn-danger', function () {
+                        n.close();
+                    })
+                ]
+            });
+            n.show();
+        }
+
+        function getDepartments() {
+            return $.ajax({
+                url: 'api/department',
+                type: 'GET',
+                error: function (xhr) {
+                    notifyAjaxError(xhr);
+                }
+            });
+        }
+
+        function DepartmentViewModel(data) {
+            let self = this;
+            data = data || {};
+            this.id = data.id || '';
+            this.name = ko.observable(data.name || '').extend({
+                required: true,
+                maxLength: 20,
+            });
+            this.validationModel = ko.validatedObservable({
+                name: this.name,
+            });
+            const employees = ko.utils.arrayMap(data.employees, function (e) {
+                if(e != null)
+                    return new EmployeeViewModel(e)   
+            })
+            this.employees = ko.observableArray(employees[0] !== undefined ? employees : [])
+
+        }
+
+        function EmployeeViewModel(data) {
+            data = data || {};
+            this.id = data.id || ''
+            this.firstName = ko.observable(data.firstName || '');
+            this.lastName = ko.observable(data.lastName || '');
+            this.midleName = ko.observable(data.midleName || '');
+            this.departmentId = ko.observable(data.departmentId || '');
+            this.salary = ko.observable(data.salary || '');
+        }
+
+        function PageViewModel(data) {
+            let self = this;
+
+            ko.validation.init({
+                insertMessages: false,
+                errorElementClass: 'text-danger'
+            });
+
+            this.formData = ko.observable(this);
+
+            const departmentList = ko.utils.arrayMap(data, function (e) {
+                return new DepartmentViewModel(e);
+            });
+            this.departmentList = ko.observableArray(departmentList);
+            this.currentDepartmentData = ko.observable(new DepartmentViewModel());
+            this.visibleDepartmentBodyTemplate = ko.observable(false);
+            this.departmentModalBodyTemplate = ko.observable('editDepartmentBodyTemplate')
+            this.departmentModalMode = ko.observable();
+            this.departmentTitle = ko.pureComputed(function () {
+                switch (self.departmentModalMode()) {
+                    case 'create':
+                        return 'Create Department'
+                        break;
+                    case 'edit':
+                        return 'Edit Department'
+                        break;
+                    case 'delete':
+                        return 'Delete Department'
+                        break;
+                }
+            });
+            this.formButtonTitle = ko.pureComputed(function () {
+                switch (self.departmentModalMode()) {
+                    case 'create':
+                        return 'Create'
+                        break;
+                    case 'edit':
+                        return 'Edit'
+                        break;
+                    case 'delete':
+                        return 'Delete'
+                        break;
+                }
+            });
+
+            this.addDepartment = function (data) {
+                self.departmentModalBodyTemplate('editDepartmentBodyTemplate')
+                self.departmentModalMode('create');
+                self.currentDepartmentData(new DepartmentViewModel());
+                self.visibleDepartmentBodyTemplate(true);
+            }
+
+            let cloneData;
+            this.editDepartment = function (data) {
+                cloneData = data;
+                self.departmentModalBodyTemplate('editDepartmentBodyTemplate')
+                self.departmentModalMode('edit');
+                self.currentDepartmentData(new DepartmentViewModel(ko.toJS(data)));
+                self.visibleDepartmentBodyTemplate(true);
+            }
+
+            this.hasEmployeeList = ko.observable(false)
+            this.radioSelected = ko.observable();
+            this.targetDepartment = ko.observable();
+
+            this.targetDepartments = ko.pureComputed(function () {
+                return ko.utils.arrayFilter(self.departmentList(), function (e) {
+                    return self.currentDepartmentData() !== e;
+                });
+            });
+            this.deleteDepartment = function (data) {
+                self.departmentModalBodyTemplate('deleteDepartmentBodyTemplate')
+                self.departmentModalMode('delete');
+                self.currentDepartmentData(data);
+                self.hasEmployeeList(data.employees().length ? true : false);
+                self.visibleDepartmentBodyTemplate(true);
+            }
+
+            deleteDepartmentAjax = function (id) {
+                $.ajax({
+                    contentType: 'application/json',
+                    url: '/api/department/',
+                    type: 'DELETE',
+                    data: ko.toJSON(id),
+                    success: function () {
+                        self.departmentList.remove(self.currentDepartmentData());
+                        notifyWarning(`deleted: ${self.currentDepartmentData().name()}`);
+                    },
+                    error: function (xhr) {
+                        notifyAjaxError(xhr);
+                    }
+                }).then(function () {
+                    self.visibleDepartmentBodyTemplate(false);
+                });
+            }
+
+            this.handleButton = function (data) {
+                if (self.departmentModalMode() !== 'delete') {
+                    const department =  ko.toJSON(self.currentDepartmentData());
+                    $.ajax({
+                        contentType: 'application/json',
+                        url: '/api/department/',
+                        type: self.departmentModalMode() === 'create' ? 'POST' : 'PUT',
+                        data: department,
+                        success: function (data) {
+                            self.departmentModalMode() === 'create' ?
+                                self.departmentList.push(new DepartmentViewModel(data.response)) :
+                                self.departmentList.replace(cloneData, self.currentDepartmentData())
+
+                            notifyInfo(`Department ${department.name} has been saved`);
+                        },
+                        error: function (xhr) {
+                            notifyAjaxError(xhr);
+                        }
+                    }).then(function () {
+                        self.visibleDepartmentBodyTemplate(false);
+                    });
+                } 
+                else {
+                    let departmentId = ko.toJSON(self.currentDepartmentData().id);
+                    if (self.hasEmployeeList()) {
+                        if (self.radioSelected() === "delete") {
+                            $.ajax({
+                                contentType: 'application/json',
+                                url: '/api/employee/deleteByDepartment',
+                                type: 'DELETE',
+                                data: departmentId,
+                                success: function () {
+                                    notifyWarning(`employees deleted!`);
+                                    deleteDepartmentAjax(departmentId);
+                                },
+                                error: function (xhr) {
+                                    notifyAjaxError(xhr);
+                                }
+                            });
+                        }
+                        else if (self.radioSelected() === "transfer") {
+                            let transferRequest = ko.toJSON({ oldDepartmentId: self.currentDepartmentData().id, newDepartmentId: self.targetDepartment().id })
+                            $.ajax({
+                                contentType: 'application/json',
+                                url: '/api/employee/transferToTheDepartment',
+                                type: 'PUT',
+                                data: transferRequest,
+                                success: function () {
+                                    ko.merge.fromJS(self.targetDepartment().employees(), self.currentDepartmentData().employees())
+                                    notifyInfo(`employees transferred!`);
+                                    deleteDepartmentAjax(departmentId);
+                                },
+                                error: function (xhr) {
+                                    notifyAjaxError(xhr);
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        deleteDepartmentAjax(departmentId)
+                    }
+                }
+            }
+
+            this.goToEmployees = function (data) {
+                location.href = 'employees/' + data.id;
+            }
+        }
+
+        $(document).ready(function () {
+            ko.validation.init({
+                decorateInputElement: true,
+                //errorElementClass: 'has-error',
+                insertMessages: true,
+                grouping: {
+                   deep: true,
+                   live: true,
+                   observable: true
+                }
+            });
+
+            getDepartments().then(data => {
+                ko.applyBindings(new PageViewModel(data));
+            });
+        });
+    </script>
+
 </body>
+
 </html>
