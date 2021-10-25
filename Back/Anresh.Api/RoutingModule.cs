@@ -10,6 +10,11 @@ namespace Anresh.Api
         {
             return app.UseEndpoints(endpoints =>
             {
+                endpoints.MapGet("/", async context => {
+                    await context.Response.WriteAsync(new Preprocessor().Process(
+                        await System.IO.File.ReadAllTextAsync(@"wwwroot/index.html")
+                    ));
+                });
 
                 endpoints.MapGet("/employees", async context => {
                     await context.Response.WriteAsync(new Preprocessor().Process(
