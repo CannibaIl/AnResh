@@ -10,21 +10,35 @@ namespace Anresh.Api
         {
             return app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGet("/employees/{id:int}", async context =>
-                {
-                    await context.Response.WriteAsync(await System.IO.File.ReadAllTextAsync(@"wwwroot/employees.html"));
+                endpoints.MapGet("/", async context => {
+                    await context.Response.WriteAsync(new Preprocessor().Process(
+                        await System.IO.File.ReadAllTextAsync(@"wwwroot/index.html")
+                    ));
                 });
-                endpoints.MapGet("/employees", async context =>
-                {
-                    await context.Response.WriteAsync(await System.IO.File.ReadAllTextAsync(@"wwwroot/employees.html"));
+
+                endpoints.MapGet("/employees", async context => {
+                    await context.Response.WriteAsync(new Preprocessor().Process(
+                        await System.IO.File.ReadAllTextAsync(@"wwwroot/employees.html")
+                    ));
                 });
-                endpoints.MapGet("/departments", async context =>
-                {
-                    await context.Response.WriteAsync(await System.IO.File.ReadAllTextAsync(@"wwwroot/departments.html"));
+
+                endpoints.MapGet("/employees/{id:int}", async context => {
+                    await context.Response.WriteAsync(new Preprocessor().Process(
+                        await System.IO.File.ReadAllTextAsync(@"wwwroot/employees.html")
+                    ));
                 });
+
+                endpoints.MapGet("/departments", async context => {
+                    await context.Response.WriteAsync(new Preprocessor().Process(
+                        await System.IO.File.ReadAllTextAsync(@"wwwroot/departments.html")
+                    ));
+                });
+
                 endpoints.MapGet("/file", async context =>
                 {
-                    await context.Response.WriteAsync(await System.IO.File.ReadAllTextAsync(@"wwwroot/file.html"));
+                    await context.Response.WriteAsync(new Preprocessor().Process(
+                        await System.IO.File.ReadAllTextAsync(@"wwwroot/file.html")
+                    ));
                 });
             });
         }

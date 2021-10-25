@@ -16,9 +16,4 @@
     <ProjectReference Include="..\Anresh.Domain\Anresh.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Services\Department\Contracts\" />
-    <Folder Include="Services\Employee\Contracts\" />
-  </ItemGroup>
-
 </Project>

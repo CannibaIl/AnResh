@@ -10,9 +10,10 @@ namespace Anresh.Domain.Repositories
 {
     public interface IGenericRepository<TEntity,TId> where TEntity : Entity<TId>
     {
+        Task<TId> Save(TEntity entity);
+        Task Update(TEntity entity);
+        Task Delete(TId id, CancellationToken cancellation);
         Task<TEntity> FindById(TId id, CancellationToken cancellationToken);
-        Task<TEntity> FindFirstOrDefaultWhere(string colum, string value, CancellationToken cancellationToken);
-        Task<List<TEntity>> FindWhere(string colum, string value, CancellationToken cancellationToken);
         Task<List<TEntity>> FindAll(CancellationToken cancellationToken);
     }
 }
