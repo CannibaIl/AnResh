@@ -1,0 +1,36 @@
+﻿<script src="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/noty.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/noty.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/noty@3.2.0-beta/lib/themes/sunset.css">
+<script>
+
+    function notify(options) {
+        new Noty({
+            type: options.type,
+            text: options.text,
+            timeout: options.type === 'error' ? 30000 : 10000,
+            layout: 'bottomRight',
+            theme: 'sunset',
+            progressBar: true,
+            closeWith: ['click'],
+        }).show();
+    }
+
+    function notifyInfo(text) {
+        notify({
+            type: 'success',
+            text: text
+        })
+    }
+
+    function notifyError(text) {
+        notify({
+            type: 'error',
+            text: text
+        })
+    }
+
+    function notifyAjaxError(xhr) {
+        const msg = 'A server communication error occured. Server returns response code ' + xhr.status;
+        notifyError(msg);
+    }
+</script>
