@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Anresh.DataAccess.Repositories
@@ -19,42 +18,59 @@ namespace Anresh.DataAccess.Repositories
             DbConnection = dbConnection;
             TableName = departments;
         }
+
         private static IEnumerable<string> GetColumns()
         {
             return typeof(TEntity)
                     .GetProperties()
-                    .Where(e => e.Name != "Id" && !e.PropertyType.GetTypeInfo().IsGenericType)
+                    .Where(e => e.Name != "Id")
                     .Select(e => e.Name);
         }
+
         public async Task<TId> Save(TEntity entity)
         {
             var columns = GetColumns();
-            var stringOfColumns = string.Join(", ", columns);
-            var stringOfParameters = string.Join(", ", columns.Select(e => "@" + e));
-            var query = await DbConnection.QueryAsync<TId>($"insert into {TableName} ({stringOfColumns}) OUTPUT INSERTED.* values ({stringOfParameters})", entity);
+            var columnNames = string.Join(", ", columns);
+            var parameterNames = string.Join(", ", columns.Select(e => "@" + e));
+            var query = await DbConnection.QueryAsync<TId>($"insert into { TableName } ({columnNames}) OUTPUT INSERTED.* values ({parameterNames})", entity);
 
-            var id = query.First();
-            return id;
+            return query.First();
         }
 
         public async Task Update(TEntity entity)
         {
             var columns = GetColumns();
-            var stringOfColumns = string.Join(", ", columns.Select(e => $"{e} = @{e}"));
-            await DbConnection.ExecuteAsync($"UPDATE {TableName} SET {stringOfColumns} WHERE Id = @Id", entity);
+            var columnNames = string.Join(", ", columns.Select(e => $"{e} = @{e}"));
+            await DbConnection.ExecuteAsync($"UPDATE { TableName } SET {columnNames} WHERE Id = {entity.Id}", entity);
         }
-        public async Task Delete(TId id, CancellationToken cancellation)
+
+        public async Task Delete(TId id)
         {
-            await DbConnection.ExecuteAsync($"DELETE FROM {TableName} WHERE Id = {id}", cancellation);
+            var sql = $"DELETE FROM {TableName} WHERE Id = @id";
+            await DbConnection.ExecuteAsync(sql, new { id });
         }
-        public async Task<TEntity> FindById(TId id, CancellationToken cancellationToken)
+
+        public async Task DeleteMultiple(IEnumerable<TId> listId)
         {
-            return await DbConnection.QueryFirstOrDefaultAsync<TEntity>($"SELECT * FROM {TableName} WHERE Id = {id}", cancellationToken);
+            var stringOfIds = string.Join(", ", listId);
+            var sql = $"DELETE FROM { TableName } WHERE Id IN ({stringOfIds})";
+            await DbConnection.ExecuteAsync(sql);
         }
-        public async Task<List<TEntity>> FindAll(CancellationToken cancellationToken)
+
+        public async Task<IEnumerable<TEntity>> FindAll() {
+            var sql = $"SELECT * FROM {TableName}";
+            return await DbConnection.QueryAsync<TEntity>(sql);
+        }
+
+        public async Task<TEntity> FindById(int id)
         {
-            var data = await DbConnection.QueryAsync<TEntity>($"SELECT * FROM {TableName}", cancellationToken);
-            return data.ToList();
+            var sql = $@"SELECT * FROM {TableName} WHERE Id = @id";
+            return await DbConnection.QuerySingleOrDefaultAsync<TEntity>(sql, new { id });
+        }
+
+        public async Task<bool> IsExists(TId id)
+        {
+            return await DbConnection.ExecuteScalarAsync<bool>($"SELECT COUNT(1) FROM {TableName} WHERE Id = {id}");
         }
     }
 }

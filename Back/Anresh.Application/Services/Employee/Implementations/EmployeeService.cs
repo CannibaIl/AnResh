@@ -1,11 +1,15 @@
-﻿using Anresh.Application.Services.Employee.Contracts;
+﻿using System;
 using Anresh.Application.Services.Employee.Interfaces;
-using Anresh.Domain.DTO;
+using Anresh.Domain;
 using Anresh.Domain.Repositories;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
 using System.Threading.Tasks;
+using Anresh.Application.Services.Department.Contracts;
+using Create = Anresh.Application.Services.Employee.Contracts.Create;
+using Update = Anresh.Application.Services.Employee.Contracts.Update;
 
 namespace Anresh.Application.Services.Employee.Implementations
 {
@@ -13,6 +17,7 @@ namespace Anresh.Application.Services.Employee.Implementations
     {
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IDepartmentRepository _departmentRepository;
+
         public EmployeeService(
             IEmployeeRepository employeeRepository,
             IDepartmentRepository departmentRepository
@@ -22,89 +27,102 @@ namespace Anresh.Application.Services.Employee.Implementations
             _departmentRepository = departmentRepository;
         }
 
-        public async Task<EmployeeDTO> Create(Create.Request request, CancellationToken cancellationToken)
+        public async Task<Domain.Employee> Create(Create.Request request)
         {
-            if (await _departmentRepository.FindById(request.DepartmentId, cancellationToken) == null)
+            if (await _departmentRepository.IsExists(request.DepartmentId) == false)
             {
-                throw new KeyNotFoundException($"Отдел с id:{request.DepartmentId} не найден");
+                throw new KeyNotFoundException($"Department with id: { request.DepartmentId } not found");
             }
 
             var employe = new Domain.Employee()
             {
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                MidleName = request.MidleName,
+                MiddleName = request.MiddleName,
                 DepartmentId = request.DepartmentId,
                 Salary = request.Salary,
             };
+
             var id = await _employeeRepository.Save(employe);
-
-            return await _employeeRepository.FindByIdWithDepartment(id, cancellationToken);
-        }
-        public async Task<EmployeeDTO> Update(Update.Request request, CancellationToken cancellationToken)
-        {
-            if (await _employeeRepository.FindById(request.Id, cancellationToken) == null)
-            {
-                throw new KeyNotFoundException($"Сотрудник с id:{request.Id} не найден");
-            }
-
-            var employe = new Domain.Employee()
-            {
-                Id = request.Id,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                MidleName = request.MidleName,
-                DepartmentId = request.DepartmentId,
-                Salary = request.Salary
-            };
-            await _employeeRepository.Update(employe);
-
-            return await _employeeRepository.FindByIdWithDepartment(request.Id, cancellationToken);
-        }
-        public async Task Delete(int id, CancellationToken cancellationToken)
-        {
-            if (await _employeeRepository.FindById(id, cancellationToken) == null)
-            {
-                throw new KeyNotFoundException($"Сотрудник с {id} не найден");
-            }
-            await _employeeRepository.Delete(id, cancellationToken);
-        }
-        public async Task DeleteList(List<int> listId, CancellationToken cancellationToken)
-        {
-            var notFoundStringId = "";
-            foreach (var id in listId)
-            {
-                if(await _employeeRepository.FindById(id, cancellationToken) == null) 
-                    notFoundStringId += $"{id}, ";
-                else
-                    await _employeeRepository.Delete(id, cancellationToken);
-            }
-            if (notFoundStringId != "")
-                throw new KeyNotFoundException($"Сотрудники с id: {notFoundStringId} не найдены");
-        }
-        public async Task<Domain.Employee> GetById(int id, CancellationToken cancellationToken)
-        {
-            var employe = await _employeeRepository.FindById(id, cancellationToken);
-            if (employe == null)
-                throw new KeyNotFoundException($"Сотрудник с {id} не найден");
+            employe.Id = id;
 
             return employe;
         }
-        public async Task<IEnumerable<EmployeeDTO>> GetAll(CancellationToken cancellationToken)
-        {
-            return await _employeeRepository.FindAllWithDepartment(cancellationToken);
+
+        public async Task<Domain.Employee> Update(Update.Request request) {
+            var employee = await _employeeRepository.FindById(request.Id);
+            if (employee == null)
+            {
+                throw new KeyNotFoundException($"Employee with id: { request.Id } not found");
+            }
+
+            employee.FirstName = request.FirstName;
+            employee.LastName = request.LastName;
+            employee.MiddleName = request.MiddleName;
+            employee.DepartmentId = request.DepartmentId;
+            employee.Salary = request.Salary;
+
+            await _employeeRepository.Update(employee);
+
+            return await _employeeRepository.FindById(request.Id);
         }
-        public async Task<IEnumerable<EmployeeDTO>> GetByDepartamentId(int id, CancellationToken cancellationToken)
+
+        public async Task Delete(int id)
         {
-            return await _employeeRepository.FindByDepartmentIdWithDepartment(id, cancellationToken);
+            if (await _employeeRepository.IsExists(id) == false)
+            {
+                throw new KeyNotFoundException($"Employee with id: { id } not found");
+            }
+            await _employeeRepository.Delete(id);
         }
-        public async Task TransferToTheDepartment(int oldDepartmentId, int newDepartmentId, CancellationToken cancellationToken)
+
+        public async Task DeleteMultiple(IEnumerable<int> ids)
         {
-            await _employeeRepository.TransferToTheDepartment(oldDepartmentId, newDepartmentId, cancellationToken);
+            await _employeeRepository.DeleteMultiple(ids);
         }
-        public async Task DeleteAllByDepartmentId(int id, CancellationToken cancellationToken)
+
+        public async Task<Domain.Employee> GetById(int id)
         {
-            await _employeeRepository.DeleteByDepartmentId(id, cancellationToken);
+            var employe = await _employeeRepository.FindById(id);
+            if (employe == null)
+            {
+                throw new KeyNotFoundException($"Employee with id: { id } not found");
+            }
+            return employe;
+        }
+
+        public async Task<IEnumerable<EmployeeDto>> GetAll()
+        {
+            var departments = await _departmentRepository.FindAll();
+            var departmentMap = departments.ToDictionary(d => d.Id);
+            var employees = await _employeeRepository.FindAll();
+            return employees.Select(e => MakeEmployee(e, (id) => departmentMap.GetValueOrDefault(id) ));
+        }
+
+        public async Task<IEnumerable<EmployeeDto>> GetByDepartamentId(int id)
+        {
+            var employees = await _employeeRepository.FindAllByDepartmentId(id);
+            var department = await _departmentRepository.FindById(id);
+            return employees.Select(e => MakeEmployee(e, _ => department));
+        }
+
+        public async Task DeleteAllByDepartmentId(int id)
+        {
+            await _employeeRepository.DeleteByDepartmentId(id);
+        }
+
+        private static EmployeeDto MakeEmployee(Domain.Employee employee, Func<int, Domain.Department> departmenResolver) {
+            var department = departmenResolver(employee.DepartmentId);
+            return new EmployeeDto
+            {
+                Id = employee.Id,
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                MiddleName = employee.MiddleName,
+                DepartmentId = department?.Id,
+                DepartmentName = department?.Name,
+                Salary = employee.Salary
+            };
         }
     }
 }
