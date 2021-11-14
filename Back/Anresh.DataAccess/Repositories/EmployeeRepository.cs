@@ -1,77 +1,50 @@
-﻿using Anresh.Domain;
-using Anresh.Domain.DTO;
+﻿using System;
+using Anresh.Domain;
 using Anresh.Domain.Repositories;
 using Dapper;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Anresh.DataAccess.Repositories
 {
     public sealed class EmployeeRepository : GenericRepository<Employee, int>, IEmployeeRepository
     {
-        public EmployeeRepository(IDbConnection db) : base(db, TableNames.Employees)
+        public EmployeeRepository(IDbConnection db)
+            : base(db, TableNames.Employees)
         {
         }
-        public async Task<List<Employee>> FindByDepartmentId(int id, CancellationToken cancellationToken)
+
+        public async Task<IEnumerable<Employee>> FindAllByDepartmentId(int id)
         {
-            var data = await DbConnection.QueryAsync<Employee>($"SELECT * FROM {TableName} WHERE DepartmentID = {id}", cancellationToken);
-            return data.ToList();
+            var sql = $"SELECT * FROM {TableName} WHERE DepartmentID = @id";
+            return await DbConnection.QueryAsync<Employee>(sql, new { id });
         }
 
-        public async Task TransferToTheDepartment(int oldDepartmentId, int newDepartmentId, CancellationToken cancellationToken)
+        public async Task TransferToDepartment(int oldDepartmentId, int newDepartmentId)
         {
-            await DbConnection.QueryAsync<Employee>($"UPDATE {TableName} SET DepartmentId = {newDepartmentId} WHERE DepartmentId = {oldDepartmentId}", cancellationToken);
-        }
-        public async Task DeleteByDepartmentId(int id, CancellationToken cancellation)
-        {
-            await DbConnection.ExecuteAsync($"delete from {TableName} where DepartmentId = {id}", cancellation);
+            var sql = $"UPDATE {TableName} SET DepartmentId = @newDepartmentId WHERE DepartmentId = @oldDepartmentId";
+            await DbConnection.QueryAsync<Employee>(sql, new { newDepartmentId, oldDepartmentId });
         }
 
-        public async Task<IEnumerable<EmployeeDTO>> FindAllWithDepartment(CancellationToken cancellationToken)
+        public async Task DeleteByDepartmentId(int id)
         {
-            var sql = $@"SELECT * FROM {TableNames.Employees} e 
-                        LEFT JOIN {TableNames.Departments} d 
-                        ON d.Id = e.DepartmentId 
-                        ORDER BY e.Id";
-
-            var employees = await DbConnection.QueryAsync<EmployeeDTO, Department, EmployeeDTO>(sql, (employee, department) => { 
-                employee.Department = department; return employee; 
-            }, cancellationToken);
-
-            return employees.ToList();
+            var sql = $"delete from {TableName} where DepartmentId = @id";
+            await DbConnection.ExecuteAsync(sql, new { id });
         }
 
-        public async Task<IEnumerable<EmployeeDTO>> FindByDepartmentIdWithDepartment(int id, CancellationToken cancellationToken)
+        public IDictionary<int, int> CountAndGroupByDepartment()
         {
-            var sql = $@"SELECT * FROM {TableNames.Employees} e 
-                        LEFT JOIN {TableNames.Departments} d 
-                        ON e.DepartmentId = d.Id 
-                        WHERE e.DepartmentId = {id} 
-                        ORDER BY e.Id";
-
-            var employees = await DbConnection.QueryAsync<EmployeeDTO, Department, EmployeeDTO>(sql, (employee, department) => {
-                employee.Department = department; return employee;
-            }, cancellationToken);
-
-            return employees;
+            var sql = $"select DepartmentId, count(DepartmentId) as Count from {TableName} group by DepartmentId";
+            return DbConnection.Query(sql).ToDictionary(x => (int)x.DepartmentId, x => (int)x.Count);
         }
 
-        public async Task<EmployeeDTO> FindByIdWithDepartment(int id, CancellationToken cancellationToken)
+        public int CountByDepartmentId(int id)
         {
-            var sql = $@"SELECT * FROM {TableNames.Employees} e 
-                        LEFT JOIN {TableNames.Departments} d 
-                        ON e.DepartmentId = d.Id 
-                        WHERE e.Id = {id} 
-                        ORDER BY e.Id";
-
-            var employee = await DbConnection.QueryAsync<EmployeeDTO, Department, EmployeeDTO>(sql, (employee, department) => { 
-                employee.Department = department; return employee; 
-            }, cancellationToken);
-
-            return employee.FirstOrDefault();
+            var sql = $"select count(Id) from {TableName} where DepartmentId = @id";
+            return DbConnection.ExecuteScalar<int>(sql, new { id });
         }
     }
 }

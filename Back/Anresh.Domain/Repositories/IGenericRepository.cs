@@ -1,9 +1,5 @@
 ﻿using Anresh.Domain.Shared;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Anresh.Domain.Repositories
@@ -12,8 +8,10 @@ namespace Anresh.Domain.Repositories
     {
         Task<TId> Save(TEntity entity);
         Task Update(TEntity entity);
-        Task Delete(TId id, CancellationToken cancellation);
-        Task<TEntity> FindById(TId id, CancellationToken cancellationToken);
-        Task<List<TEntity>> FindAll(CancellationToken cancellationToken);
+        Task Delete(TId id);
+        Task DeleteMultiple(IEnumerable<TId> ids);
+        Task<IEnumerable<TEntity>> FindAll();
+        Task<TEntity> FindById(int id);
+        Task<bool> IsExists(TId id);
     }
 }
