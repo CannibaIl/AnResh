@@ -27,6 +27,7 @@ namespace Anresh.Application.Services.Employee.Implementations
             _departmentRepository = departmentRepository;
         }
 
+        //в целом можно использовать EmployeeDto - набор свойств соответствует
         public async Task<Domain.Employee> Create(Create.Request request)
         {
             if (await _departmentRepository.IsExists(request.DepartmentId) == false)

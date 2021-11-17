@@ -19,6 +19,7 @@ namespace Anresh.DataAccess.Repositories
             TableName = departments;
         }
 
+        //это можно вынести как extention method для Entity
         private static IEnumerable<string> GetColumns()
         {
             return typeof(TEntity)

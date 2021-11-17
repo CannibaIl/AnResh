@@ -2,6 +2,7 @@
 {
     public class Create
     {
+        //зачем nested класс?
         public class Request
         {
             public string FirstName { get; set; }

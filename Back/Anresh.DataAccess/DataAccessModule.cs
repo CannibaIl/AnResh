@@ -13,6 +13,7 @@ namespace Anresh.DataAccess
         public static IServiceCollection AddDataAccessModule(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddScoped<IDbConnection>((sp) =>
+               //IOptions позволяет работать с конфигами как с объектами
                new SqlConnection(configuration.GetConnectionString(ConnectionStringName))
             );
 

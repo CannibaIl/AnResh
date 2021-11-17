@@ -8,6 +8,7 @@ namespace Anresh.Application.Services.Department.Interfaces
 {
     public interface IDepartmentService
     {
+        //если используешь таски, используй и стандарт именования методов: GetSimpleByIdAsync
         Task<Domain.Department> GetSimpleById(int id);
         Task<IEnumerable<DepartmentDto>> GetAll();
         Task<IEnumerable<OptionDto>> GetAllAsOptions();
