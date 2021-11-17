@@ -7,11 +7,13 @@ namespace Anresh.Application.Services.File.Implementations
     public sealed class FileService : IFileService
     {
         private static readonly object LockObject = new();
+        //это в конфиг
         private const string FilePath = @"Files\TextFile.txt";
         public string Load()
         {
             lock (LockObject)
             {
+                //а если файла нет?
                 return System.IO.File.ReadAllText(FilePath, Encoding.UTF8);
             }
         }

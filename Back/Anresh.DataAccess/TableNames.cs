@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Anresh.DataAccess
 {
+    //идея норм, реализовать попробуй через атрибуты - увидишь насколько это удобно
     internal static class TableNames
     {
         public const string Employees = "Employees";
