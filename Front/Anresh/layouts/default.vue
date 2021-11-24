@@ -1,7 +1,7 @@
 <template>
   <section class="col-lg-12 d-flex justify-content-end" style="background-color: #131524">
     <Navbar />
-
+  
     <main class="col-lg-10 p-0 corner" >
       <div class="container-fluid">
         <b-breadcrumb nuxt-link-active :items="crumbs"></b-breadcrumb>
@@ -16,6 +16,7 @@
 import Navbar from '@/components/Navbar'
 
 export default {
+  middleware: 'auth',
   components: {
     Navbar
   },

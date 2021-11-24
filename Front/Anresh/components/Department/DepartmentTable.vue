@@ -13,9 +13,9 @@
     />
 
     <b-button
-      class="d-block mt-2 mb-4"
+      class="custom-btn d-block mt-2 mb-4"
       variant="primary"
-      v-if="!hasDepartments && !isBusy"
+      v-if="!hasDepartments && !isBusy && isAdmin"
       @click.prevent="handleCreateDepartment()"
       ><fa icon="plus" style="transform: scale(0.8)" /> Add
     </b-button>
@@ -25,8 +25,9 @@
       class="big-table-wrap table-responsive"
     >
       <b-button
+       v-if="isAdmin"
         @click.prevent="handleCreateDepartment()"
-        class="mt-2"
+        class="custom-btn mt-2"
         variant="primary"
         ><fa icon="plus" style="transform: scale(0.8)" /> Add</b-button
       >
@@ -54,7 +55,7 @@
           </div>
         </template>
 
-        <template #cell(*)="row">
+        <template v-if="isAdmin" #cell(*)="row">
           <div class="d-flex table-btn-group">
             <button @click.prevent="handleEditDepartment(row.item)">
               <fa class="mr-2 table-ico table-ico-primary" icon="edit" />
@@ -77,6 +78,7 @@ export default {
   components: { EditDepartmentModal, DeleteDepartmentModal },
 
   data: () => ({
+    isAdmin: false,
     isBusy: true,
     fields: [
       { key: "id", label: "Id", class: "col-auto" },
@@ -96,6 +98,7 @@ export default {
   async mounted() {
     let { data } = await this.$axios.get("/api/department");
     this.departments = data;
+    this.isAdmin =  this.$auth.user.role === "Admin";
     this.isBusy = false;
   },
 

@@ -1,4 +1,4 @@
-﻿namespace Anresh.Application.Services.Department.Contracts
+﻿namespace Anresh.Domain.DTO
 {
     public class DepartmentDto
     {

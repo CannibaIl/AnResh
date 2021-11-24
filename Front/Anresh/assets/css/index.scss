@@ -1,16 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
 $blue-color: #0062cc;
 $red-color: #EE2B45;
+*{
+  box-shadow: none !important;
+}
 
 body {
-  font-family: 'IBM Plex Sans', sans-serif !important;
-  background: #E5E5E5 !important;
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: #E5E5E5;
+  color: #000;
 }
 
 h1 {
   font-weight: 700;
   font-size: 32px;
   line-height: 80px;
+}
+
+.form-group {
+  position: relative;
+  margin-bottom: 1.5rem;
+  .invalid-feedback {
+    position: absolute;
+    top: 100%;
+  }
 }
 
 button {
@@ -22,14 +35,14 @@ button {
   cursor: pointer;
 }
 
-.btn {
-  padding: 0 30px 0 19px !important;
+.custom-btn {
+  padding: 0 30px 0 19px;
   min-width: 100px;
-  border-radius: 5px 5px 20px 5px !important;
-  font-style: normal !important;
-  font-size: 18px !important;
-  font-weight: 600 !important;
-  color: #fff !important;
+  border-radius: 5px 5px 20px 5px;
+  font-style: normal;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
   height: 40px;
 }
 
@@ -119,14 +132,14 @@ button {
 .big-table-select-column {
   .big-table-body {
     tr {
-        background-color: #404958!important;
+        background-color: #404958;
       &:hover {
         
         td {
-          background-color: #aeaeae !important;
+          background-color: #aeaeae!important;
 
           &:first-child {
-            background-color: #404958!important;
+            background-color: #404958;
             &::before {
               filter: grayscale(70%);
             }
@@ -177,17 +190,17 @@ button {
         td {
           &:first-child {
             &::before {
-              filter: grayscale(35%) !important;
+              filter: grayscale(35%);
             }
           }
         }
       }
 
       td {
-        background-color: #aeaeae !important;
-
+        background-color: #aeaeae;
         &:first-child {
           &::before {
+            overflow: hidden;
             filter: grayscale(0%);
           }
         }
@@ -195,7 +208,7 @@ button {
         &:last-child {
           .table-btn-group {
             opacity: 0;
-            visibility: hidden;
+            overflow: hidden;
           }
         }
       }
@@ -293,9 +306,6 @@ button {
 // table end 
 
 
-.modal-dialog {
-    transform: translateX(19%) !important;
-}
 .modal  {
     background-color: #ffffff0c;
 }
@@ -306,12 +316,6 @@ button {
     backdrop-filter: blur(10px);
   }
 }
-
-@media (max-width: 992px) {
-    .modal-dialog {
-        transform: translateX(0) !important;
-    }
-  }
 
 .pointer {
   cursor: pointer;

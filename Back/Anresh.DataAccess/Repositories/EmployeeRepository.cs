@@ -7,44 +7,46 @@ using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using Anresh.Domain.DTO;
 
 namespace Anresh.DataAccess.Repositories
 {
     public sealed class EmployeeRepository : GenericRepository<Employee, int>, IEmployeeRepository
     {
-        public EmployeeRepository(IDbConnection db)
-            : base(db, TableNames.Employees)
+        public EmployeeRepository(IDbConnection db) : base(db)
         {
         }
 
-        public async Task<IEnumerable<Employee>> FindAllByDepartmentId(int id)
+        public async Task<IEnumerable<EmployeeDto>> FindAllByDepartmentIdWithDepartmentNameAsync(int id)
         {
-            var sql = $"SELECT * FROM {TableName} WHERE DepartmentID = @id";
-            return await DbConnection.QueryAsync<Employee>(sql, new { id });
+            var sql = $@"SELECT e.*, d.Name as DepartmentName
+                         FROM Employees e LEFT OUTER JOIN Departments d ON e.DepartmentID = d.Id
+                         WHERE e.DepartmentID = @id
+                         GROUP BY e.Id, e.LastName, e.FirstName, e.MiddleName, e.Salary, e.DepartmentID, d.Name";
+
+            return await DbConnection.QueryAsync<EmployeeDto>(sql, new { id });
         }
 
-        public async Task TransferToDepartment(int oldDepartmentId, int newDepartmentId)
+        public async Task TransferToDepartmentAsync(int oldDepartmentId, int newDepartmentId)
         {
             var sql = $"UPDATE {TableName} SET DepartmentId = @newDepartmentId WHERE DepartmentId = @oldDepartmentId";
             await DbConnection.QueryAsync<Employee>(sql, new { newDepartmentId, oldDepartmentId });
         }
 
-        public async Task DeleteByDepartmentId(int id)
+        public async Task DeleteByDepartmentIdAsync(int id)
         {
             var sql = $"delete from {TableName} where DepartmentId = @id";
             await DbConnection.ExecuteAsync(sql, new { id });
         }
 
-        public IDictionary<int, int> CountAndGroupByDepartment()
+        public async Task<IEnumerable<EmployeeDto>> FindAllWithDepartmentNameAsync()
         {
-            var sql = $"select DepartmentId, count(DepartmentId) as Count from {TableName} group by DepartmentId";
-            return DbConnection.Query(sql).ToDictionary(x => (int)x.DepartmentId, x => (int)x.Count);
+            var sql = @"SELECT e.*, d.Name as DepartmentName
+                        FROM Employees e LEFT OUTER JOIN Departments d ON e.DepartmentID = d.Id
+                        GROUP BY e.LastName, e.FirstName, e.MiddleName, e.Salary, e.Id, e.DepartmentID, d.Name";
+
+            return await DbConnection.QueryAsync<EmployeeDto>(sql);
         }
 
-        public int CountByDepartmentId(int id)
-        {
-            var sql = $"select count(Id) from {TableName} where DepartmentId = @id";
-            return DbConnection.ExecuteScalar<int>(sql, new { id });
-        }
     }
 }

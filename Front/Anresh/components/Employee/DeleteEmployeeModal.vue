@@ -6,8 +6,8 @@
       hide-footer
     >
      <footer class="d-flex justify-content-end">
-            <b-button @click="show = false" class="mr-2">Close</b-button>
-            <b-button @click.prevent="deleteEmployees()" variant="danger">Delete</b-button>
+            <b-button class="custom-btn mr-2" @click="show = false">Close</b-button>
+            <b-button class="custom-btn" @click.prevent="deleteEmployees()" variant="danger">Delete</b-button>
         </footer>
 
     </b-modal>

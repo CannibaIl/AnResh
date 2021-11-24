@@ -1,4 +1,5 @@
 ﻿using Anresh.Application.Services.Department.Contracts;
+using Anresh.Domain.DTO;
 using Anresh.Domain.Repositories;
 using System.Collections.Generic;
 using System.Threading;
@@ -8,12 +9,12 @@ namespace Anresh.Application.Services.Department.Interfaces
 {
     public interface IDepartmentService
     {
-        Task<Domain.Department> GetSimpleById(int id);
-        Task<IEnumerable<DepartmentDto>> GetAll();
-        Task<IEnumerable<OptionDto>> GetAllAsOptions();
-        Task<Domain.Department> Create(Create.Request request);
-        Task<Domain.Department> Update(Update.Request request);
-        Task Delete(int id);
-        Task<DepartmentDto> MoveEmployees(int oldDepartmentId, int newDepartmentId);
+        Task<Domain.Department> GetSimpleByIdAsync(int id);
+        Task<IEnumerable<DepartmentDto>> GetAllAsync();
+        Task<IEnumerable<Domain.Department>> GetAllSimpleAsync();
+        Task<Domain.Department> CreateAsync(Create request);
+        Task<Domain.Department> UpdateAsync(Update request);
+        Task DeleteAsync(int id);
+        Task MoveEmployeesAsync(int oldDepartmentId, int newDepartmentId);
     }
 }

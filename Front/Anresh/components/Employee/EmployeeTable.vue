@@ -12,9 +12,9 @@
 
     <b-button
       button
-      class="btn primary d-block mt-2 mb-4"
+      class="custom-btn primary d-block mt-2 mb-4"
       variant="primary"
-      v-if="!hasEmployees && !isBusy"
+      v-if="!hasEmployees && !isBusy && isAdmin"
       @click.prevent="handleCreateEmployee()"
     >
       <fa icon="plus" style="transform: scale(0.8)" /> Add
@@ -23,16 +23,17 @@
     <div v-if="isBusy || hasEmployees" class="big-table-wrap table-responsive">
       <div class="mb-2 d-flex flex-wrap justify-content-between">
         <b-button
+          v-if="isAdmin"
           button
           @click.prevent="handleCreateEmployee()"
-          class="btn primary mr-2 mt-2"
+          class="custom-btn btn primary mr-2 mt-2"
           variant="primary"
           ><fa icon="plus" style="transform: scale(0.8)" /> Add</b-button
         >
         <b-button
           @click.prevent="handleDeleteSelectedEmployees()"
-          v-if="selectedEmployees.length"
-          class="btn mt-2"
+          v-if="selectedEmployees.length && isAdmin"
+          class="custom-btn mt-2"
           variant="danger"
           ><fa icon="trash" style="transform: scale(0.8)" /> Delete
           selected</b-button
@@ -40,7 +41,7 @@
       </div>
 
       <b-table
-        class="big-table big-table-select-column big-table-buttons"
+        :class="isAdmin ? 'big-table big-table-select-column big-table-buttons' : 'big-table' "
         striped
         hover
         borderless
@@ -83,7 +84,7 @@
           </div>
         </template>
 
-        <template #cell(*)="row">
+        <template v-if="isAdmin" #cell(*)="row">
           <div class="d-flex table-btn-group">
             <button @click.prevent="handleEditEmployee(row.item)">
               <fa class="mr-2 table-ico table-ico-primary" icon="edit" />
@@ -111,6 +112,7 @@ export default {
 
   data: () => ({
     isBusy: true,
+    isAdmin: false,
     fields: [
       { key: "+", class: "col-auto text-center" },
       { key: "id", label: "Id" },
@@ -138,6 +140,7 @@ export default {
         ? await this.$axios.get("/api/employee")
         : await this.$axios.get("/api/employee/department/" + id);
     this.employees = data;
+    this.isAdmin =  this.$auth.user.role === "Admin";
     this.isBusy = false;
   },
 

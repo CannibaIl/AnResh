@@ -28,7 +28,8 @@ module.exports = {
   ** Global CSS
   */
   css: [
-    '~/assets/css/index.scss'
+    '~/assets/css/index.scss',
+    '~/assets/css/auth.scss'
   ],
 
   /*
@@ -47,14 +48,52 @@ module.exports = {
   ],
   modules: [
     '@nuxtjs/axios',
+    '@nuxtjs/auth-next',
     'bootstrap-vue/nuxt',
   ],
   axios: {
     accept: '/',
-    baseURL: 'https://localhost:5001',
+    baseURL: 'http://localhost:5000',
     headers: {
       'Content-Type': 'application/json'
     },
+  },
+  auth: {
+    redirect: {
+      login: '/login',
+      logout: '/login',
+    },
+    localStorage: false,
+    cookie: {
+      options: {
+        expires: 7
+      }
+    },
+    strategies: {
+      local: {
+        token: {
+          property: 'token',
+          global: true,
+          required: true,
+          type: 'Bearer'
+        },
+        user: {
+          property: false 
+        },
+        endpoints: {
+          login: {
+            url: '/api/user/authenticate',
+            method: 'post',
+          },
+          logout: false,
+          refreshToken: false,
+          user: { 
+            url: '/api/user', 
+            method: 'get',
+          }
+        }
+      }
+    }
   },
   fontawesome: {
     component: 'fa',
