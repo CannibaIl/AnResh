@@ -1,9 +1,10 @@
 ﻿using Anresh.Domain.Shared;
-using System.ComponentModel.DataAnnotations.Schema;
+
 
 namespace Anresh.Domain
 {
-    public sealed class Employee : Entity<int>
+    [Table("Employees")]
+    public sealed class Employee : Entity<Employee, int>
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }

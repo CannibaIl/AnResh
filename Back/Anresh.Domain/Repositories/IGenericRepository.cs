@@ -4,14 +4,14 @@ using System.Threading.Tasks;
 
 namespace Anresh.Domain.Repositories
 {
-    public interface IGenericRepository<TEntity,TId> where TEntity : Entity<TId>
+    public interface IGenericRepository<TEntity,TId> where TEntity : Entity<TEntity, TId>
     {
-        Task<TId> Save(TEntity entity);
-        Task Update(TEntity entity);
-        Task Delete(TId id);
-        Task DeleteMultiple(IEnumerable<TId> ids);
-        Task<IEnumerable<TEntity>> FindAll();
-        Task<TEntity> FindById(int id);
-        Task<bool> IsExists(TId id);
+        Task<TId> SaveAsync(TEntity entity);
+        Task UpdateAsync(TEntity entity);
+        Task DeleteAsync(TId id);
+        Task DeleteMultipleAsync(IEnumerable<TId> ids);
+        Task<IEnumerable<TEntity>> FindAllAsync();
+        Task<TEntity> FindByIdAsync(int id);
+        Task<bool> IsExistsAsync(TId id);
     }
 }

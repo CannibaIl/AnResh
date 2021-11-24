@@ -20,8 +20,8 @@
         </b-form-group>
 
         <footer class="modal-footer p-0 pt-3">
-            <b-button @click="show = false">Close</b-button>
-            <b-button v-bind:disabled="$v.form.$invalid" type="submit" variant="primary">Save</b-button>
+            <b-button class="custom-btn" @click="show = false">Close</b-button>
+            <b-button class="custom-btn" v-bind:disabled="$v.form.$invalid" type="submit" variant="primary">Save</b-button>
         </footer>
 
       </b-form>

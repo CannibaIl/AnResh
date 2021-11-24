@@ -1,6 +1,7 @@
 ﻿using Anresh.Api.Controllers.Requests.Employee;
 using Anresh.Application.Services.Employee.Contracts;
 using Anresh.Application.Services.Employee.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ namespace Anresh.Controllers
 {
     [Route("api/employee")]
     [ApiController]
+    [Authorize]
     public class EmployeeController : Controller
     {
         private readonly IEmployeeService _employeeService;
@@ -21,22 +23,22 @@ namespace Anresh.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAllAsync()
         {
-            return Ok(await _employeeService.GetAll());
+            return Ok(await _employeeService.GetAllAsync());
         }
 
         [HttpGet("department/{id}")]
-        public async Task<IActionResult> GetByDepartament([Required] int id)
+        public async Task<IActionResult> GetByDepartamentAsync(int id)
         {
-            return Ok(await _employeeService.GetByDepartamentId(id));
+            return Ok(await _employeeService.GetByDepartamentIdAsync(id));
         }
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        public async Task<IActionResult> Create([FromBody] CreateEmployeeRequest request)
+        public async Task<IActionResult> CreateAsync([FromBody] CreateEmployeeRequest request)
         {
-            var response = await _employeeService.Create(new Create.Request()
+            var response = await _employeeService.CreateAsync(new Create()
             {
                 FirstName = request.FirstName,
                 LastName = request.LastName,
@@ -48,9 +50,9 @@ namespace Anresh.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> Update([FromBody] UpdateEmployeeRequest request)
+        public async Task<IActionResult> UpdateAsync([FromBody] UpdateEmployeeRequest request)
         {
-           var response = await _employeeService.Update(new Update.Request()
+           var response = await _employeeService.UpdateAsync(new Update()
            {
                Id = request.Id,
                FirstName = request.FirstName,
@@ -64,25 +66,25 @@ namespace Anresh.Controllers
 
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> Delete([FromRoute] int id)
+        public async Task<IActionResult> DeleteAsync([FromRoute] int id)
         {
-            await _employeeService.Delete(id);
+            await _employeeService.DeleteAsync(id);
             return NoContent();
         }
 
         [HttpDelete("multiple")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> DeleteMultiple([FromBody] List<int> listId)
+        public async Task<IActionResult> DeleteMultipleAsync([FromBody] List<int> listId)
         {
-            await _employeeService.DeleteMultiple(listId);
+            await _employeeService.DeleteMultipleAsync(listId);
             return NoContent();
         }
 
         [HttpDelete("department/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> DeleteAllByDepartmentId([FromRoute] int id)
+        public async Task<IActionResult> DeleteAllByDepartmentIdAsync([FromRoute] int id)
         {
-            await _employeeService.DeleteAllByDepartmentId(id);
+            await _employeeService.DeleteAllByDepartmentIdAsync(id);
             return NoContent();
         }
     }

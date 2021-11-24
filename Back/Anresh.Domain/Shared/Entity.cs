@@ -1,13 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Anresh.Domain.Shared
 {
-    public  class Entity<TId>
+    public class Entity<TEntity, TId>
     {
         public TId Id { get; set; }
+        public IEnumerable<string> GetColumns()
+        {
+            return typeof(TEntity)
+                   .GetProperties()
+                   .Where(e => e.Name != "Id")
+                   .Select(e => e.Name);
+        }
     }
 }

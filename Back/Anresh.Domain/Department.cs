@@ -2,7 +2,8 @@
 
 namespace Anresh.Domain
 {
-    public sealed class Department : Entity<int>
+    [Table("Departments")]
+    public sealed class Department : Entity<Department,int>
     {
         public string Name { get; set; }
     }

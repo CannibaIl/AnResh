@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Anresh.Application.Services.Department.Contracts;
 using Anresh.Application.Services.Department.Interfaces;
+using Anresh.Domain.DTO;
 using Anresh.Domain.Repositories;
 
 namespace Anresh.Application.Services.Department.Implementations
@@ -20,9 +21,9 @@ namespace Anresh.Application.Services.Department.Implementations
             _departmentRepository = departmentRepository;
         }
 
-        public async Task<Domain.Department> Create(Create.Request request)
+        public async Task<Domain.Department> CreateAsync(Create request)
         {
-            if (await _departmentRepository.CheckName(request.Name))
+            if (await _departmentRepository.CheckNameAsync(request.Name))
             {
                 throw new Exception($"Department with name: {request.Name} already created!");
             }
@@ -32,15 +33,15 @@ namespace Anresh.Application.Services.Department.Implementations
                 Name = request.Name
             };
 
-            var id = await _departmentRepository.Save(department);
+            var id = await _departmentRepository.SaveAsync(department);
             department.Id = id;
 
             return department;
         }
 
-        public async Task<Domain.Department> Update(Update.Request request)
+        public async Task<Domain.Department> UpdateAsync(Update request)
         {
-           var department = await _departmentRepository.FindById(request.Id);
+            var department = await _departmentRepository.FindByIdAsync(request.Id);
             if (department == null)
             {
                 throw new KeyNotFoundException($"Department with id:{request.Id} not found");
@@ -48,66 +49,44 @@ namespace Anresh.Application.Services.Department.Implementations
 
             department.Name = request.Name;
 
-            await _departmentRepository.Update(department);
+            await _departmentRepository.UpdateAsync(department);
 
             return department;
         }
 
-        public async Task Delete(int id)
+        public async Task DeleteAsync(int id)
         {
-            await _departmentRepository.Delete(id);
+            await _departmentRepository.DeleteAsync(id);
         }
 
-        public async Task<Domain.Department> GetSimpleById(int id)
+        public async Task<Domain.Department> GetSimpleByIdAsync(int id)
         {
-            return await _departmentRepository.FindById(id);
+            return await _departmentRepository.FindByIdAsync(id);
         }
 
-        public async Task<IEnumerable<DepartmentDto>> GetAll()
+        public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
         {
-            var employeeCount = _employeeRepository.CountAndGroupByDepartment();
-            return await _departmentRepository.FindAll()
-                                              .ContinueWith(res => res.Result.Select(d => {
-                                                  employeeCount.TryGetValue(d.Id, out var count);
-                                                  return new DepartmentDto
-                                                  {
-                                                      Id = d.Id,
-                                                      Name = d.Name,
-                                                      EmployeeCount = count
-                                                  };
-                                              }));
+            return await _departmentRepository.FindAllWithEmployeeCountAsync();
         }
 
-        public async Task<IEnumerable<OptionDto>> GetAllAsOptions()
+        public async Task<IEnumerable<Domain.Department>> GetAllSimpleAsync()
         {
-            return await _departmentRepository.FindAll()
-                                       .ContinueWith(res => res.Result.Select(d =>
-                                                                                    new OptionDto(d.Id, d.Name))
-                                                     );
+            return await _departmentRepository.FindAllAsync();
         }
 
-        public async Task<DepartmentDto> MoveEmployees(int oldDepartmentId, int newDepartmentId)
+        public async Task MoveEmployeesAsync(int oldDepartmentId, int newDepartmentId)
         {
-            if (!_departmentRepository.IsExists(newDepartmentId).Result)
+            if (!_departmentRepository.IsExistsAsync(newDepartmentId).Result)
             {
                 throw new KeyNotFoundException($"Department with id={newDepartmentId} not found");
             }
 
-            if (!_departmentRepository.IsExists(oldDepartmentId).Result)
+            if (!_departmentRepository.IsExistsAsync(oldDepartmentId).Result)
             {
                 throw new KeyNotFoundException($"Department with id={oldDepartmentId} not found");
             }
 
-            await _employeeRepository.TransferToDepartment(oldDepartmentId, newDepartmentId);
-
-            var department = await _departmentRepository.FindById(newDepartmentId);
-            var count = _employeeRepository.CountByDepartmentId(newDepartmentId);
-            return new DepartmentDto
-            {
-                Id = department.Id,
-                Name = department.Name,
-                EmployeeCount = count
-            };
+            await _employeeRepository.TransferToDepartmentAsync(oldDepartmentId, newDepartmentId);
         }
     }
 }

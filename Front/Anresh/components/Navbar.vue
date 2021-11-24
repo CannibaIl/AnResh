@@ -22,9 +22,21 @@
       </svg>
     </b-navbar-toggle>
 
-    <div class="d-none d-lg-flex align-items-center" style="color: #fff">
+    <!-- <b-button v-if="$auth.loggedIn" @click="$auth.logout()" variant="danger">logout</b-button> -->
+
+    <div class="d-none d-lg-flex align-items-center ml-3" style="color: #fff">
       <b-avatar variant="secondary" text="JC"></b-avatar>
-      <span class="ml-2">J. Circlehead</span>
+      <b-dropdown
+      right
+      :text="userName"
+      class="mx-3"
+    >
+      <b-dropdown-item href="#">Action</b-dropdown-item>
+      <b-dropdown-item href="#">Another action</b-dropdown-item>
+      <b-dropdown-item @click="$auth.logout()">
+        <fa icon="sign-out-alt"/>
+        Sign out</b-dropdown-item>
+    </b-dropdown>
     </div>
 
     <b-collapse id="nav-collapse" class="col-lg-2 navbar-container" is-nav>
@@ -32,7 +44,7 @@
         <li class="d-lg-none mb-5">
           <div style="color: #fff">
             <b-avatar class="mb-2" variant="secondary" text="JC"></b-avatar>
-            <span class="d-block">J. Circlehead</span>
+            <span class="d-block">{{userName}}</span>
           </div>
         </li>
 
@@ -60,13 +72,22 @@
             Departments</nuxt-link
           >
         </li>
+        <li class="nav-item d-lg-none">
+          <button class="nav-link" @click="$auth.logout()" style="width: 100%">Sign out</button>
+        </li>
       </ul>
     </b-collapse>
   </b-navbar>
 </template>
 
 <script>
-export default {};
+export default {
+  computed: {
+    userName(context) {
+      return context.$auth.user === null ? "" : this.$getFullName(context.$auth.user)
+    }
+  }
+};
 </script>
 <style lang="scss" scoped>
 $dark-color: #131524;
@@ -170,9 +191,9 @@ $light-color: #e5e5e5;
     text-align: center;
     ul {
       padding: 0;
-      width: 90%;
+      width: 100%;
       .nav-link {
-        padding: 0!important;
+        padding: 0 0 0 10px!important;
         border-top-left-radius: 0 !important;
         border-bottom-left-radius: 0 !important;
       }

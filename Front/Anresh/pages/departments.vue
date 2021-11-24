@@ -9,6 +9,7 @@
 <script>
 import departmentTable from '~/components/Department/DepartmentTable.vue';
 export default {
+  //middleware: 'auth-admin',
   components: { departmentTable },
 };
 </script>

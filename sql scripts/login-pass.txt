@@ -1,0 +1,3 @@
+admin@admin.admin - Qwerty123$ [Admin]
+Jerry@gmaill.com - Qwerty123$ [User]
+user@user.user - Qwerty123$ [User]

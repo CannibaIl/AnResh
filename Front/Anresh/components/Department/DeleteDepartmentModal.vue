@@ -45,11 +45,12 @@
         <span v-else>There is no employees in the department</span>
 
         <footer class="modal-footer p-0 pt-3 mt-3">
-            <b-button @click="show = false">Close</b-button>
+            <b-button @click="show = false" class="custom-btn">Close</b-button>
             
             <b-button v-bind:disabled="$v.form.$invalid" 
             type="submit" 
             variant="danger"
+            class="custom-btn"
             >Delete</b-button>
         </footer>
     
