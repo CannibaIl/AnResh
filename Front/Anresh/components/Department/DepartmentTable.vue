@@ -40,8 +40,6 @@
         :busy="isBusy"
         :items="departments"
         :fields="fields"
-        thead-class="big-table-head"
-        tbody-class="big-table-body"
         @row-clicked="goToEmployees"
       >
         <template #head(*)>
@@ -56,7 +54,7 @@
         </template>
 
         <template v-if="isAdmin" #cell(*)="row">
-          <div class="d-flex table-btn-group">
+          <div>
             <button @click.prevent="handleEditDepartment(row.item)">
               <fa class="mr-2 table-ico table-ico-primary" icon="edit" />
             </button>
@@ -127,7 +125,7 @@ export default {
     },
 
     addDepartment(data) {
-      this.departments.unshift(data);
+      this.departments.push(data);
     },
 
     replaceDepartment(data) {

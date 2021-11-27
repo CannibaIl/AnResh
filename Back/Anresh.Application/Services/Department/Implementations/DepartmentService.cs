@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Anresh.Application.Services.Department.Contracts;
+﻿using Anresh.Application.Services.Department.Contracts;
 using Anresh.Application.Services.Department.Interfaces;
 using Anresh.Domain.DTO;
 using Anresh.Domain.Repositories;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Anresh.Application.Services.Department.Implementations
 {
@@ -76,7 +74,7 @@ namespace Anresh.Application.Services.Department.Implementations
 
         public async Task MoveEmployeesAsync(int oldDepartmentId, int newDepartmentId)
         {
-            if (!_departmentRepository.IsExistsAsync(newDepartmentId).Result)
+            if (await _departmentRepository.IsExistsAsync(newDepartmentId) == false)
             {
                 throw new KeyNotFoundException($"Department with id={newDepartmentId} not found");
             }

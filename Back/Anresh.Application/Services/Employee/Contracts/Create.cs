@@ -1,4 +1,6 @@
-﻿namespace Anresh.Application.Services.Employee.Contracts
+﻿using System.Collections.Generic;
+
+namespace Anresh.Application.Services.Employee.Contracts
 {
     public class Create
     {
@@ -7,5 +9,6 @@
         public string MiddleName { get; set; }
         public int DepartmentId { get; set; }
         public decimal Salary { get; set; }
+        public List<Domain.Skill> Skills {  get; set; }
     }
 }

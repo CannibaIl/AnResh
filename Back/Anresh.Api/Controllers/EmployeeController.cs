@@ -5,8 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Anresh.Controllers
@@ -44,7 +42,8 @@ namespace Anresh.Controllers
                 LastName = request.LastName,
                 MiddleName = request.MiddleName,
                 DepartmentId = request.DepartmentId,
-                Salary = request.Salary
+                Salary = request.Salary,
+                Skills = request.Skills
             });
             return Created($"api/employee/{response.Id}", new { response });
         }
@@ -52,16 +51,17 @@ namespace Anresh.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateAsync([FromBody] UpdateEmployeeRequest request)
         {
-           var response = await _employeeService.UpdateAsync(new Update()
-           {
-               Id = request.Id,
-               FirstName = request.FirstName,
-               LastName = request.LastName,
-               MiddleName = request.MiddleName,
-               DepartmentId = request.DepartmentId,
-               Salary = request.Salary
-           });
-           return Ok(response);
+            var response = await _employeeService.UpdateAsync(new Update()
+            {
+                Id = request.Id,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                MiddleName = request.MiddleName,
+                DepartmentId = request.DepartmentId,
+                Salary = request.Salary,
+                Skills = request.Skills
+            });
+            return Ok(response);
         }
 
         [HttpDelete("{id}")]

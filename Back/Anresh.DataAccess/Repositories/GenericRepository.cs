@@ -1,9 +1,11 @@
 ﻿using Anresh.Domain.Repositories;
 using Anresh.Domain.Shared;
 using Dapper;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Anresh.DataAccess.Repositories
@@ -22,9 +24,19 @@ namespace Anresh.DataAccess.Repositories
         {
             var columnNames = string.Join(", ", entity.GetColumns());
             var parameterNames = string.Join(", ", entity.GetColumns().Select(e => "@" + e));
-            var query = await DbConnection.QueryAsync<TId>($"insert into { TableName } ({columnNames}) OUTPUT INSERTED.* values ({parameterNames})", entity);
+            var sql = $"insert into { TableName } ({columnNames}) OUTPUT INSERTED.* values ({parameterNames})";
+            var query = await DbConnection.QueryAsync<TId>(sql, entity);
 
             return query.First();
+        }
+
+        public async Task SaveMultipleAsync(string values)
+        {
+            var entity = new Entity<TEntity, TId>();
+
+            var columnNames = string.Join(", ", entity.GetColumns());
+            var sql = $"insert into { TableName } ({columnNames}) values {values}";
+            await DbConnection.QueryAsync<TId>(sql);
         }
 
         public async Task UpdateAsync(TEntity entity)

@@ -13,8 +13,8 @@ namespace Anresh.Application.Services.Employee.Interfaces
         Task<IEnumerable<EmployeeDto>> GetAllAsync();
         Task<Domain.Employee> GetByIdAsync(int id);
         Task<IEnumerable<EmployeeDto>> GetByDepartamentIdAsync(int id);
-        Task<Domain.Employee> CreateAsync(Create request);
-        Task<Domain.Employee> UpdateAsync(Update request);
+        Task<EmployeeDto> CreateAsync(Create request);
+        Task<EmployeeDto> UpdateAsync(Update request);
         Task DeleteAsync(int id);
         Task DeleteMultipleAsync(IEnumerable<int> ids);
         Task DeleteAllByDepartmentIdAsync(int id);

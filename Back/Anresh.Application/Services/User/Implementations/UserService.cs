@@ -244,8 +244,8 @@ namespace Anresh.Application.Services.User.Implementations
 
             var token = CreateToken(user);
             //var message = $"<a href=\"{_options.FrontUri}/confirm/{token}\">confirm email</a>";
-
             //SendEmail(request.Email, "Register confirm", message);
+
             return new Register.Response()
             {
                 Id = user.Id,

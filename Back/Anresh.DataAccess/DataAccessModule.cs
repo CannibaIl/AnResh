@@ -1,10 +1,9 @@
-﻿using Anresh.Domain.Repositories;
-using Anresh.DataAccess.Repositories;
+﻿using Anresh.DataAccess.Repositories;
+using Anresh.Domain.Repositories;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Data;
 using Microsoft.Extensions.Options;
+using System.Data;
 
 namespace Anresh.DataAccess
 {
@@ -19,6 +18,8 @@ namespace Anresh.DataAccess
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             services.AddScoped<IDepartmentRepository, DepartmentRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<ISkillRepository, SkillRepository>();
+            services.AddScoped<IEmployeeSkillRepisitory, EmployeeSkillRepisitory>();
 
             return services;
         }

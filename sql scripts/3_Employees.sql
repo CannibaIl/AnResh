@@ -6,7 +6,7 @@ FirstName NVARCHAR(20) NOT NULL,
 LastName NVARCHAR(20) NOT NULL,
 MiddleName NVARCHAR(20),
 DepartmentID INT NOT NULL,
-Salary DECIMAL NOT NULL,
+Salary DECIMAL(18,2) NOT NULL,
 FOREIGN KEY (DepartmentID) REFERENCES Departments (Id)
 )
 

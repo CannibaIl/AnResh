@@ -72,55 +72,67 @@ button {
   background-color: #404958;
   padding: 0 8px 8px 8px;
   border-radius: 7px;
-
-  .big-table {
+  .big-table{
     background-color: #404958;
-    border-radius: 10px;
-    font-style: normal;
-    font-weight: normal;
-    font-size: 13px;
-    line-height: 17px;
-
-    .big-table-head {
+    width: 100%;
+    border: none;
+    border-radius: 7px;
+    overflow: hidden;
+    thead {
       color: #fff;
     }
-
-    .big-table-body {
-      tr {
+    tbody {
+      background-color: #d3d2d2;
+      tr{
         &:nth-child(odd) {
-          td {
             background-color: #d3d2d2;
-          }
         }
-
-        td {
-          background-color: #E5E5E5;
+        &:nth-child(even) {
+            background-color: #c8c7c7;
         }
-
-        &:first-child {
-          td {
-            &:first-child {
-              border-top-left-radius: 7px;
-              overflow: hidden;
-            }
-
-            &:last-child {
-              border-top-right-radius: 7px;
-              overflow: hidden;
-            }
-          }
+        &:hover{
+          background-color: #c3c2c2;
         }
+      }
+    }
+  }
+}
 
-        &:last-child {
-          td {
-            &:first-child {
-              border-bottom-left-radius: 7px;
-              overflow: hidden;
+.big-table-buttons {
+  thead {
+    tr{
+      th{
+        &:last-child{
+          width: 0;
+        }
+      }
+    }
+  }
+  tbody {
+    tr{
+      td{
+        &:last-child{
+          transition: .2s;
+          display: flex;
+          width: max-content;
+          button {
+            .table-ico {
+              color: #131524;
+              font-size: 20px;
+              transition: .1s;
+              &:hover {
+                transform: scale(.90);
+              }
             }
-
-            &:last-child {
-              border-bottom-right-radius: 7px;
-              overflow: hidden;
+            .table-ico-primary {
+              &:hover {
+                color: $blue-color;
+              }
+            }
+            .table-ico-danger {
+              &:hover {
+                color: $red-color;
+              }
             }
           }
         }
@@ -130,179 +142,42 @@ button {
 }
 
 .big-table-select-column {
-  .big-table-body {
-    tr {
-        background-color: #404958;
-      &:hover {
-        
-        td {
-          background-color: #aeaeae!important;
-
-          &:first-child {
-            background-color: #404958;
-            &::before {
-              filter: grayscale(70%);
-            }
-          }
-        }
-      }
-
-      td {
-          
+  thead {
+    tr{
+      th{
         &:first-child {
-          position: relative;
           width: 0;
-          background-color: #404958 !important;
-
-          &::before {
-            content: '';
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            left: 0;
-            top: 0;
-            background-image: url("~/assets/images/check-danger.svg");
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: 13px;
-            filter: grayscale(100%);
-          }
         }
       }
-
+    }
+  }
+  tbody {
+    tr{
+      td:first-child {
+        background-color: #404958;
+      }
       &:first-child {
         td:nth-child(2) {
-          border-top-left-radius: 7px;
-          overflow: hidden;
+          border-top-left-radius: 7px; 
         }
       }
-
       &:last-child {
-        td:nth-child(2) {
-          border-bottom-left-radius: 7px;
-          overflow: hidden;
-        }
-      }
-    }
-
-    .b-table-row-selected {
-      &:hover {
-        td {
-          &:first-child {
-            &::before {
-              filter: grayscale(35%);
-            }
-          }
-        }
-      }
-
-      td {
-        background-color: #aeaeae;
         &:first-child {
-          &::before {
-            overflow: hidden;
-            filter: grayscale(0%);
-          }
-        }
-
-        &:last-child {
-          .table-btn-group {
-            opacity: 0;
-            overflow: hidden;
-          }
+          background-color: #404958;
         }
       }
     }
   }
 }
-
-.select-all {
-    position: relative;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -10%);
-    width: 20px;
-    height: 20px;
-    border-radius: 10px;
-    transition: .3s;
-    cursor: pointer;
-
-    svg {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      transition: .2s;
-    }
-  }
-  .select-all-true {
-    background-color: $red-color;
-    &:hover {
-      background-color: rgb(185, 58, 75);
-    }
-  }
-  .select-all-false {
-    background-color: #fff;
-  }
 
 .big-table-pointer {
-  .big-table-body {
-    tr {
+  tbody {
+    tr{
       cursor: pointer;
-
-      td {
-        transition: .2s;
-      }
-
-      &:hover {
-        td {
-          transition: .2s;
-          background-color: #aeaeae !important;
-        }
-      }
     }
   }
 }
 
-.big-table-buttons {
-  .big-table-body {
-    tr {
-      td {
-        &:last-child {
-          width: 0px;
-        }
-      }
-    }
-  }
-}
-
-.table-btn-group {
-  transition: .2s;
-
-  button {
-    .table-ico {
-      color: #131524;
-      font-size: 20px;
-      transition: .1s;
-
-      &:hover {
-        transform: scale(.90);
-      }
-    }
-
-    .table-ico-primary {
-      &:hover {
-        color: $blue-color;
-      }
-    }
-
-    .table-ico-danger {
-      &:hover {
-        color: $red-color;
-      }
-    }
-  }
-}
 // table end 
 
 
