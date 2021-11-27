@@ -32,7 +32,7 @@ export default {
         this.selectedEmployees = data;
         this.title = "Delete employees";
         this.employee = null;
-      } 
+      }
       else {
         this.employee = data;
         this.title = `Delete ${this.$getFullName(data)}?`;
@@ -42,11 +42,11 @@ export default {
 
     deleteEmployees() {  
       if(this.employee === null){
-        const listId = this.selectedEmployees.map(e => e.id);
+        const listId = this.selectedEmployees;
         this.$axios.delete("/api/employee/multiple", {data: listId})
             .then(() => {
               this.show = false;
-              this.$emit('row-deleted', this.selectedEmployees);
+              this.$emit('row-deleted', listId);
               this.$notifyWarn('DELETED', `${listId.length} employees`);
               })
             .catch(error => {

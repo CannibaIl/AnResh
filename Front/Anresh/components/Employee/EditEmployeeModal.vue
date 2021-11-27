@@ -72,6 +72,7 @@
                 <b-form-group label="Salary*">
                   <b-form-input
                     type="number"
+                    step="0.01"
                     v-model="$v.form.salary.$model"
                     :state="validateState('salary')"
                     aria-describedby="employee-input-salary-live-feedback"
@@ -86,7 +87,6 @@
 
                 <b-form-group label="Department*">
                   <b-form-select
-                    class="mb-3"
                     v-model="$v.form.departmentId.$model"
                     :options="departments"
                     value-field="id"
@@ -97,6 +97,22 @@
                       >-- Please select department --</b-form-select-option
                     >
                   </b-form-select>
+                </b-form-group>
+
+                <b-form-group label="Skills:">
+                  <label
+                    class="d-inline mr-1"
+                    v-for="skill in selectedSkills"
+                    :key="skill.name"
+                    >{{ skill.name }},
+                  </label>
+                  <div class="select-skill">
+                    <span v-for="skill in skills" :key="skill.id">
+                      <b-form-checkbox v-model="form.skills" :value="skill">{{
+                        skill.name
+                      }}</b-form-checkbox>
+                    </span>
+                  </div>
                 </b-form-group>
               </div>
 
@@ -117,7 +133,7 @@
                 <b-button
                   class="custom-btn"
                   v-if="departments.length"
-                  v-bind:disabled="$v.form.$invalid"
+                  v-bind:disabled="$v.form.$invalid || disabledSaveButton"
                   type="submit"
                   variant="primary"
                   >Save</b-button
@@ -136,7 +152,7 @@
             <b-form @submit.prevent="handleUser">
               <b-form-group label="Email*">
                 <b-form-input
-                  :disabled="this.handleAccount !== 'Create'"
+                  :disabled="this.handleAccountButton !== 'Create'"
                   v-model="$v.account.email.$model"
                   :state="validateState('email')"
                   aria-describedby="input-email-live-feedback"
@@ -164,7 +180,7 @@
               </b-form-group>
 
               <b-form-group
-                v-if="this.handleAccount === 'Create'"
+                v-if="this.handleAccountButton === 'Create'"
                 label="Password*"
                 class="password-group"
               >
@@ -185,7 +201,7 @@
                   >Close</b-button
                 >
                 <b-button class="custom-btn" type="submit" variant="primary">{{
-                  handleAccount
+                  handleAccountButton
                 }}</b-button>
               </footer>
             </b-form>
@@ -202,6 +218,7 @@ import {
   required,
   maxLength,
   minLength,
+  minValue,
   email,
 } from "vuelidate/lib/validators";
 
@@ -211,17 +228,20 @@ export default {
   data() {
     return {
       disabledAccountTab: true,
-      handleAccount: "",
+      disabledSaveButton: false,
+      handleAccountButton: "Create",
       show: false,
       employee: null,
       title: "",
       departments: [],
+      skills: [],
       form: {
         firstName: null,
         lastName: null,
         middleName: null,
         departmentId: null,
         salary: null,
+        skills: [],
       },
       account: {
         id: null,
@@ -251,7 +271,9 @@ export default {
       },
       salary: {
         required,
+        minValue: minValue(1),
       },
+      skills: {},
     },
     account: {
       email: {
@@ -267,34 +289,43 @@ export default {
       },
     },
   },
-
-  async mounted() {
-    let { data } = await this.$axios.get("/api/department/simple");
-    this.departments = data;
+  computed: {
+    selectedSkills() {
+      return this.form.skills;
+    },
   },
-
   methods: {
     async open(employee) {
-
       this.disabledAccountTab = !!employee ? false : true;
       this.title = !!employee ? "Edit" : "Create";
       this.show = true;
 
-      if(!!employee) {
+      await this.$axios.get("/api/department/simple").then((d) => {
+        this.departments = d.data;
+      });
+      let skillUri = "/api/skill";
+      await this.$axios.get(skillUri).then((d) => {
+        this.skills = d.data;
+      });
+
+      if (!!employee) {
         this.employee = employee;
         this.form.firstName = employee?.firstName;
         this.form.lastName = employee?.lastName;
         this.form.middleName = employee?.middleName;
         this.form.departmentId = employee?.departmentId;
         this.form.salary = employee?.salary;
+        this.form.skills = !!employee.skills ? employee.skills : [];
 
-        let { data } = await this.$axios.get(`/api/user/employee/${employee.id}`);
-        
+        let { data } = await this.$axios.get(
+          `/api/user/employee/${employee.id}`
+        );
+
         this.account.id = data?.id;
         this.account.employeeId = data?.id;
         this.account.email = data?.email;
         this.account.role = data?.role;
-        this.handleAccount = !!data.email ? "Change role" : "Create";
+        this.handleAccountButton = !!data.email ? "Change role" : "Create";
       }
     },
     formatter(value) {
@@ -309,12 +340,14 @@ export default {
     },
 
     resetModal() {
+      this.disabledSaveButton = false;
       this.form = {
         firstName: null,
         lastName: null,
         middleName: null,
         departmentId: null,
         salary: null,
+        skills: [],
       };
       this.account = {
         employeeId: null,
@@ -347,6 +380,7 @@ export default {
             );
             this.account.employeeId = d.data.response.id;
             this.disabledAccountTab = false;
+            this.disabledSaveButton = true;
           })
           .catch((error) => {
             this.$notifyError("ERROR", `${error}`);
@@ -372,7 +406,7 @@ export default {
       }
     },
     async handleUser() {
-      if (this.handleAccount === 'Create') {
+      if (this.handleAccountButton === "Create") {
         var request = {
           employeeId: this.employee.id,
           email: this.account.email,
@@ -382,9 +416,8 @@ export default {
         await this.$axios
           .post("/api/user/create", request)
           .then((d) => {
-            this.handleAccount = 'Change role';
+            this.handleAccountButton = "Change role";
             this.$notifyInfo("ACCOUN CREATED", `${this.account.email}`);
-            console.log(d);
           })
           .catch((error) => {
             this.$notifyError("ERROR", `${error}`);
@@ -394,7 +427,7 @@ export default {
         await this.$axios
           .put("/api/user/role", request)
           .then((d) => {
-            this.$notifyInfo("ROLE CHANGED", '');
+            this.$notifyInfo("ROLE CHANGED", "");
           })
           .catch((error) => {
             this.$notifyError("ERROR", `${error}`);
@@ -412,5 +445,12 @@ export default {
   img {
     width: 100%;
   }
+}
+.select-skill {
+  overflow-y: scroll;
+  max-height: 170px;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  padding: 1rem;
 }
 </style>

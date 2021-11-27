@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using System.Collections.Generic;
 
 namespace Anresh.Api.Controllers.Requests.Employee
 {
@@ -10,6 +11,7 @@ namespace Anresh.Api.Controllers.Requests.Employee
         public string MiddleName { get; set; }
         public int DepartmentId { get; set; }
         public decimal Salary { get; set; }
+        public List<Domain.Skill> Skills { get; set; }
     }
 
     public class UpdateEmployeeRequestValidator : AbstractValidator<UpdateEmployeeRequest>

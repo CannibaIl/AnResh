@@ -1,4 +1,6 @@
-﻿namespace Anresh.Domain.DTO
+﻿using System.Collections.Generic;
+
+namespace Anresh.Domain.DTO
 {
     public class EmployeeDto
     {
@@ -9,5 +11,6 @@
         public decimal Salary { get; set; }
         public int DepartmentId { get; set; }
         public string DepartmentName { get; set; }
+        public List<Skill> Skills {  get; set; }
     }
 }

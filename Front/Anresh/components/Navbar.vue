@@ -72,6 +72,12 @@
             Departments</nuxt-link
           >
         </li>
+        <li class="nav-item">
+          <nuxt-link v-if="$auth.user.role === 'Admin'" active-class="active" class="nav-link" to="/skills">
+            <fa class="nav-link__ico d-none d-lg-inline-flex" icon="atom" style="color: #fff" />
+            Skills</nuxt-link
+          >
+        </li>
         <li class="nav-item d-lg-none">
           <button class="nav-link" @click="$auth.logout()" style="width: 100%">Sign out</button>
         </li>

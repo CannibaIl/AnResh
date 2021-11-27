@@ -36,69 +36,72 @@
           class="custom-btn mt-2"
           variant="danger"
           ><fa icon="trash" style="transform: scale(0.8)" /> Delete
-          selected</b-button
+          selected</b-button  
         >
       </div>
 
-      <b-table
-        :class="isAdmin ? 'big-table big-table-select-column big-table-buttons' : 'big-table' "
-        striped
-        hover
-        borderless
-        :busy="isBusy"
-        :items="employees"
-        :fields="fields"
-        ref="employeesTable"
-        selectable
-        @row-selected="onRowSelected"
-        thead-class="big-table-head"
-        tbody-class="big-table-body"
+      <table 
+      :class="isAdmin ? 'table table-hover table-striped table-borderless big-table big-table-buttons big-table-select-column ' 
+                      : 'table table-hover table-striped table-borderless big-table'"
+      :busy="isBusy"
       >
-        <template #head(+)>
-          <div
-            title="select all"
-            class="select-all select-all-false"
-            v-if="!selectedEmployees.length"
-            @click="selectAllRows"
-          >
-            <fa icon="check" />
-          </div>
-          <div
-            title="clear selected"
-            class="select-all select-all-true"
-            v-else
-            @click="clearSelected"
-          >
-            <fa icon="check" />
-          </div>
-        </template>
+        <thead>
+          <tr>
+            <th scope="col" v-if="isAdmin"></th>
+            <th scope="col">Id</th>
+            <th scope="col">LastName</th>
+            <th scope="col">FirstName</th>
+            <th scope="col">MiddleName</th>
+            <th scope="col">Department</th>
+            <th scope="col">Salary</th>
+            <th scope="col">Skills</th>
+            <th scope="col" v-if="isAdmin"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="employee in employees" :key="employee.id">
+            <td v-if="isAdmin">
+              <b-form-checkbox
+                v-model="selectedEmployees"
+                :value="employee.id"
+              ></b-form-checkbox>
+            </td>
+            <td>{{ employee.id }}</td>
+            <td>{{ employee.lastName }}</td>
+            <td>{{ employee.firstName }}</td>
+            <td>{{ employee.middleName }}</td>
+            <td>{{ employee.departmentName }}</td>
+            <td>{{ employee.salary }} $
+            </td>
+            <td class="employee-skill-td">
+              <span
+                class="employee-skill-item"
+                v-for="skill in employee.skills"
+                :key="skill.id"
+              >
+                {{ skill.name }}
+              </span>
+            </td>
+            <td v-if="isAdmin">
+              <div>
+                <button @click.prevent="handleEditEmployee(employee)">
+                  <fa class="mr-2 table-ico table-ico-primary" icon="edit" />
+                </button>
+                <button @click.prevent="handleDeleteEmployee(employee)">
+                  <fa class="table-ico table-ico-danger" icon="trash" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-        <template #head(*)>
-          <span></span>
-        </template>
+      <div v-if="isBusy" class="text-center text-danger my-2">
+        <b-spinner class="align-middle"></b-spinner>
+        <strong>Loading...</strong>
+      </div>
 
-        <template #table-busy>
-          <div class="text-center text-danger my-2">
-            <b-spinner class="align-middle"></b-spinner>
-            <strong>Loading...</strong>
-          </div>
-        </template>
-
-        <template v-if="isAdmin" #cell(*)="row">
-          <div class="d-flex table-btn-group">
-            <button @click.prevent="handleEditEmployee(row.item)">
-              <fa class="mr-2 table-ico table-ico-primary" icon="edit" />
-            </button>
-            <button @click.prevent="handleDeleteEmployee(row.item)">
-              <fa class="table-ico table-ico-danger" icon="trash" />
-            </button>
-          </div>
-        </template>
-      </b-table>
-
-      <p class="mt-1" style="color: #fff; margin-left: 44px">1 2 3 ...</p>
     </div>
-
     <span v-else>There are no employees</span>
   </section>
 </template>
@@ -113,16 +116,6 @@ export default {
   data: () => ({
     isBusy: true,
     isAdmin: false,
-    fields: [
-      { key: "+", class: "col-auto text-center" },
-      { key: "id", label: "Id" },
-      { key: "lastName", label: "LastName" },
-      { key: "firstName", label: "FirstName" },
-      { key: "middleName", label: "MiddleName" },
-      { key: "departmentName", label: "Department" },
-      { key: "salary", label: "Salary" },
-      { key: "*", class: "col-auto" },
-    ],
     selectedEmployees: [],
     employees: [],
   }),
@@ -140,7 +133,7 @@ export default {
         ? await this.$axios.get("/api/employee")
         : await this.$axios.get("/api/employee/department/" + id);
     this.employees = data;
-    this.isAdmin =  this.$auth.user.role === "Admin";
+    this.isAdmin = this.$auth.user.role === "Admin";
     this.isBusy = false;
   },
 
@@ -174,11 +167,10 @@ export default {
     },
 
     addEmployee(data) {
-      this.employees.unshift(data);
+      this.employees.push(data);
     },
 
     replaceEmployee(data) {
-      console.log(data);
       const index = this.employees.indexOf(data);
       this.employees.splice(index, 1, data);
     },
@@ -186,7 +178,7 @@ export default {
     handleEmployeeDeleted(data) {
       if (Array.isArray(data)) {
         data.forEach((element) => {
-          this.employees = this.employees.filter((e) => e !== element);
+          this.employees = this.employees.filter((e) => e.id !== element);
         });
       } else {
         this.employees = this.employees.filter((e) => e !== data);
@@ -195,3 +187,17 @@ export default {
   },
 };
 </script>
+
+
+<style lang="scss" scoped>
+.employee-skill-td {
+  .employee-skill-item::after {
+    content: ", ";
+    position: relative;
+    right: 2px;
+  }
+  .employee-skill-item:last-child::after {
+    content: "";
+  }
+}
+</style>

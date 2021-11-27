@@ -2,6 +2,7 @@
 using Anresh.Domain.DTO;
 using Anresh.Domain.Repositories;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Create = Anresh.Application.Services.Employee.Contracts.Create;
 using Update = Anresh.Application.Services.Employee.Contracts.Update;
@@ -12,17 +13,20 @@ namespace Anresh.Application.Services.Employee.Implementations
     {
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IDepartmentRepository _departmentRepository;
+        private readonly IEmployeeSkillRepisitory _employeeSkillRepisitory;
 
         public EmployeeService(
             IEmployeeRepository employeeRepository,
-            IDepartmentRepository departmentRepository
+            IDepartmentRepository departmentRepository,
+            IEmployeeSkillRepisitory employeeSkillRepisitory
             )
         {
             _employeeRepository = employeeRepository;
             _departmentRepository = departmentRepository;
+            _employeeSkillRepisitory = employeeSkillRepisitory;
         }
 
-        public async Task<Domain.Employee> CreateAsync(Create request)
+        public async Task<EmployeeDto> CreateAsync(Create request)
         {
             if (await _departmentRepository.IsExistsAsync(request.DepartmentId) == false)
             {
@@ -40,11 +44,25 @@ namespace Anresh.Application.Services.Employee.Implementations
 
             var id = await _employeeRepository.SaveAsync(employe);
             employe.Id = id;
+            
+            if(request.Skills.Count > 0)
+            {
+                await _employeeSkillRepisitory.SaveMultipleAsync(request.Skills, employe.Id);
+            }
 
-            return employe;
+            return new EmployeeDto()
+            {
+                Id = employe.Id,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                MiddleName = request.MiddleName,
+                DepartmentId = request.DepartmentId,
+                Salary = employe.Salary,
+                Skills = request.Skills
+            };
         }
 
-        public async Task<Domain.Employee> UpdateAsync(Update request)
+        public async Task<EmployeeDto> UpdateAsync(Update request)
         {
             var employee = await _employeeRepository.FindByIdAsync(request.Id);
             if (employee == null)
@@ -60,7 +78,21 @@ namespace Anresh.Application.Services.Employee.Implementations
 
             await _employeeRepository.UpdateAsync(employee);
 
-            return await _employeeRepository.FindByIdAsync(request.Id);
+            if (request.Skills.Count > 0)
+            {
+                await _employeeSkillRepisitory.SaveMultipleAsync(request.Skills, request.Id);
+            }
+
+            return new EmployeeDto()
+            {
+                Id = request.Id,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                MiddleName = request.MiddleName,
+                DepartmentId = request.DepartmentId,
+                Salary = request.Salary,
+                Skills = request.Skills
+            };
         }
 
         public async Task DeleteAsync(int id)
@@ -89,7 +121,7 @@ namespace Anresh.Application.Services.Employee.Implementations
 
         public async Task<IEnumerable<EmployeeDto>> GetAllAsync()
         {
-            return await _employeeRepository.FindAllWithDepartmentNameAsync();
+            return await _employeeRepository.FindAllWithDepartmentNameAndSkillsAsync();
         }
 
         public async Task<IEnumerable<EmployeeDto>> GetByDepartamentIdAsync(int id)
