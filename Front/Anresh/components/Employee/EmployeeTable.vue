@@ -2,12 +2,11 @@
   <section>
     <edit-employee-modal
       ref="editEmployeeModal"
-      @row-created="addEmployee"
-      @row-updated="replaceEmployee"
+      @row-updated="updateDataTable"
     />
     <delete-employee-modal
       ref="deleteEmployeeModal"
-      @row-deleted="handleEmployeeDeleted"
+      @row-updated="updateDataTable"
     />
 
     <b-button
@@ -40,22 +39,20 @@
         >
       </div>
 
-      <table 
-      :class="isAdmin ? 'table table-hover table-striped table-borderless big-table big-table-buttons big-table-select-column ' 
-                      : 'table table-hover table-striped table-borderless big-table'"
-      :busy="isBusy"
-      >
+      <table :busy="isBusy"
+        :class="isAdmin ? 'table table-hover table-striped table-borderless big-table big-table-buttons big-table-select-column ' 
+                        : 'table table-hover table-striped table-borderless big-table' ">
         <thead>
           <tr>
-            <th scope="col" v-if="isAdmin"></th>
-            <th scope="col">Id</th>
-            <th scope="col">LastName</th>
-            <th scope="col">FirstName</th>
-            <th scope="col">MiddleName</th>
-            <th scope="col">Department</th>
-            <th scope="col">Salary</th>
-            <th scope="col">Skills</th>
-            <th scope="col" v-if="isAdmin"></th>
+            <th class="col" v-if="isAdmin"></th>
+            <th class="col-1" @click="orderBy('Id')" >Id</th>
+            <th class="col-1" @click="orderBy('LastName')">LastName</th>
+            <th class="col-1" @click="orderBy('FirstName')">FirstName</th>
+            <th class="col-1" @click="orderBy('MiddleName')">MiddleName</th>
+            <th class="col-1" @click="orderBy('DepartmentName')">Department</th>
+            <th class="col-1" @click="orderBy('Salary')">Salary</th>
+            <th class="col-6" @click="orderBy('SkillsCount')">Skills</th>
+            <th class="col" v-if="isAdmin"></th>
           </tr>
         </thead>
         <tbody>
@@ -71,14 +68,10 @@
             <td>{{ employee.firstName }}</td>
             <td>{{ employee.middleName }}</td>
             <td>{{ employee.departmentName }}</td>
-            <td>{{ employee.salary }} $
+            <td>{{ employee.salary.toFixed(2) }} $
             </td>
             <td class="employee-skill-td">
-              <span
-                class="employee-skill-item"
-                v-for="skill in employee.skills"
-                :key="skill.id"
-              >
+              <span class="employee-skill-item" v-for="(skill, i) in employee.skills" :key="i">
                 {{ skill.name }}
               </span>
             </td>
@@ -95,11 +88,20 @@
           </tr>
         </tbody>
       </table>
-
+      
       <div v-if="isBusy" class="text-center text-danger my-2">
         <b-spinner class="align-middle"></b-spinner>
         <strong>Loading...</strong>
       </div>
+
+      <b-pagination
+        class="mt-2 custom-pagination"
+        v-model="currentPage"
+        :total-rows="totalRows"
+        :per-page="pageParams.take"
+        @page-click="onPageClick"
+        >
+      </b-pagination>
 
     </div>
     <span v-else>There are no employees</span>
@@ -113,12 +115,22 @@ export default {
   components: { EditEmployeeModal, DeleteEmployeeModal },
   props: ["departmentId"],
 
-  data: () => ({
+  data() {
+    return {
+    currentPage: 1,
+    totalRows: null,
     isBusy: true,
     isAdmin: false,
     selectedEmployees: [],
     employees: [],
-  }),
+    pageParams: {
+      take: 10,
+      skip: 0,
+      orderBy: 'FirstName',
+      ascDesc: 'asc'
+    },
+  }
+},
 
   computed: {
     hasEmployees() {
@@ -127,27 +139,46 @@ export default {
   },
 
   async mounted() {
-    const id = this.departmentId;
-    let { data } =
-      id === ""
-        ? await this.$axios.get("/api/employee")
-        : await this.$axios.get("/api/employee/department/" + id);
-    this.employees = data;
+    await this.setTotalRows();
+    this.employees = await this.getEmployees();
     this.isAdmin = this.$auth.user.role === "Admin";
     this.isBusy = false;
   },
 
   methods: {
-    selectAllRows() {
-      this.$refs.employeesTable.selectAllRows();
+    async getEmployees() {
+      const pageQuery = `?Take=${this.pageParams.take}
+                          &Skip=${this.pageParams.skip}
+                          &OrderBy=${this.pageParams.orderBy}
+                          &AscDesc=${this.pageParams.ascDesc}`;
+      const id = this.departmentId;
+      let { data } =
+      id === ""
+        ? await this.$axios.get('/api/employee'+ pageQuery)
+        : await this.$axios.get('/api/employee/department/' + id + pageQuery);
+      return data;
     },
 
-    clearSelected() {
-      this.$refs.employeesTable.clearSelected();
+    async setTotalRows() {
+      const {data} = await this.$axios.get('/api/employee/totalRows');
+      this.totalRows = data;
     },
 
-    onRowSelected(items) {
-      this.selectedEmployees = items;
+    async onPageClick(event, page) {
+      this.pageParams.skip = (page - 1) * this.pageParams.take;
+      this.employees = await this.getEmployees();
+    },
+
+    async orderBy(orderBy) {
+      if(this.pageParams.orderBy === orderBy) {
+        this.pageParams.ascDesc = this.pageParams.ascDesc === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.pageParams.ascDesc = 'asc';
+      }
+      this.pageParams.orderBy = orderBy;
+      this.pageParams.skip = 0;
+      this.currentPage = 1;
+      this.employees = await this.getEmployees();
     },
 
     handleCreateEmployee() {
@@ -166,23 +197,15 @@ export default {
       this.$refs["deleteEmployeeModal"].open(this.selectedEmployees);
     },
 
-    addEmployee(data) {
-      this.employees.push(data);
-    },
-
-    replaceEmployee(data) {
-      const index = this.employees.indexOf(data);
-      this.employees.splice(index, 1, data);
-    },
-
-    handleEmployeeDeleted(data) {
-      if (Array.isArray(data)) {
-        data.forEach((element) => {
-          this.employees = this.employees.filter((e) => e.id !== element);
-        });
-      } else {
-        this.employees = this.employees.filter((e) => e !== data);
+    async updateDataTable() {
+      let response = await this.getEmployees();
+      if(response.length === 0) {
+        this.pageParams.skip = 0;
+        this.currentPage = 1;
+        response = await this.getEmployees();
       }
+      this.employees = response;
+      await this.setTotalRows();
     },
   },
 };

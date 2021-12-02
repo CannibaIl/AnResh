@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Anresh.Domain
 {
     [Table("Skills")]
-    public class Skill : Entity<Skill, int>
+    public class Skill : Entity<int>
     {
         public string Name { get; set; }
     }

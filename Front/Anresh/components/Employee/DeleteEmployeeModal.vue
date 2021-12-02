@@ -41,12 +41,12 @@ export default {
     },
 
     deleteEmployees() {  
-      if(this.employee === null){
+      if(this.employee === null) {
         const listId = this.selectedEmployees;
-        this.$axios.delete("/api/employee/multiple", {data: listId})
+        this.$axios.delete('/api/employee/multiple', {data: listId})
             .then(() => {
               this.show = false;
-              this.$emit('row-deleted', listId);
+              this.$emit("row-updated");
               this.$notifyWarn('DELETED', `${listId.length} employees`);
               })
             .catch(error => {
@@ -54,10 +54,10 @@ export default {
             });
       } 
       else {
-        this.$axios.delete("/api/employee/" + this.employee.id)
+        this.$axios.delete('/api/employee/' + this.employee.id)
             .then(() => {
               this.show = false;
-              this.$emit('row-deleted', this.employee);
+              this.$emit("row-updated");
               this.$notifyWarn('DELETED EMPLOYEE', this.$getFullName(this.employee));
               })
             .catch(error => {

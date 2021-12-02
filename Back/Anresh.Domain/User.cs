@@ -3,7 +3,7 @@
 namespace Anresh.Domain
 {
     [Table("Users")]
-    public sealed class User : Entity<User, int>
+    public sealed class User : Entity<int>
     {
         public int EmployeeId {  get; set; }
         public string Email { get; set; }

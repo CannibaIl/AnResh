@@ -7,6 +7,6 @@ namespace Anresh.Domain.Repositories
     public interface IDepartmentRepository : IGenericRepository<Department, int>
     {
         Task<bool> CheckNameAsync(string name);
-        Task<IEnumerable<DepartmentDto>> FindAllWithEmployeeCountAsync();
+        Task<IEnumerable<DepartmentDto>> FindWithEmployeeCountAsync(PageParams pageParams);
     }
 }

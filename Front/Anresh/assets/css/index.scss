@@ -195,3 +195,20 @@ button {
 .pointer {
   cursor: pointer;
 }
+
+
+.custom-pagination {
+  margin: 0;
+  .page-item {
+    .page-link {
+      background-color: inherit;
+      border: none;
+      color: #fff;
+    }
+  }
+  .active {
+    .page-link {
+      color: red;
+    }
+  }
+}

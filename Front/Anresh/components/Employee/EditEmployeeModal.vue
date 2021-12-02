@@ -1,7 +1,6 @@
 <template>
   <section>
     <b-modal
-      id="modal-department"
       v-model="show"
       :title="title"
       @hidden="resetModal"
@@ -179,23 +178,6 @@
                 </b-form-invalid-feedback>
               </b-form-group>
 
-              <b-form-group
-                v-if="this.handleAccountButton === 'Create'"
-                label="Password*"
-                class="password-group"
-              >
-                <b-form-input
-                  class="password-input"
-                  :state="validateState('password')"
-                  v-model="$v.account.password.$model"
-                  aria-describedby="input-password-live-feedback"
-                >
-                </b-form-input>
-                <b-form-invalid-feedback id="input-password-live-feedback">
-                  The minimum password length is 6 characters
-                </b-form-invalid-feedback>
-              </b-form-group>
-
               <footer class="modal-footer p-0 pt-3">
                 <b-button class="custom-btn" @click="show = false"
                   >Close</b-button
@@ -248,7 +230,6 @@ export default {
         employeeId: null,
         email: null,
         role: null,
-        password: null,
       },
     };
   },
@@ -282,10 +263,6 @@ export default {
       },
       role: {
         required,
-      },
-      password: {
-        required,
-        minLength: minLength(6),
       },
     },
   },
@@ -353,7 +330,6 @@ export default {
         employeeId: null,
         email: null,
         role: null,
-        password: null,
       };
       this.$nextTick(() => {
         this.$v.$reset();
@@ -373,7 +349,7 @@ export default {
               (el) => el.id === this.form.departmentId
             ).name;
             d.data.response.departmentName = departmentName;
-            this.$emit("row-created", d.data.response);
+            this.$emit("row-updated");
             this.$notifyInfo(
               "ADDED EMPLOYEE",
               `${this.$getFullName(d.data.response)}`
@@ -398,7 +374,7 @@ export default {
               "UPDATED EMPLOYEE",
               `${this.$getFullName(d.data)}`
             );
-            this.$emit("row-updated", d.data);
+            this.$emit("row-updated");
           })
           .catch((error) => {
             this.$notifyError("ERROR", `${error}`);
@@ -410,8 +386,7 @@ export default {
         var request = {
           employeeId: this.employee.id,
           email: this.account.email,
-          role: this.account.role,
-          password: this.account.password,
+          role: this.account.role
         };
         await this.$axios
           .post("/api/user/create", request)

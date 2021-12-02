@@ -1,5 +1,4 @@
 ﻿using Anresh.Api.Controllers.Requests.Skill;
-using Anresh.Application.Services.Skill.Contracts;
 using Anresh.Application.Services.Skill.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -29,7 +28,7 @@ namespace Anresh.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         public async Task<IActionResult> CreateAsync([FromBody] CreateSkillRequest request)
         {
-            var response = await _skillService.CreateAsync(new Create()
+            var response = await _skillService.CreateAsync(new Domain.Skill()
             {
                 Name = request.Name
             });
@@ -39,7 +38,7 @@ namespace Anresh.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateAsync([FromBody] UpdateSkillRequest request)
         {
-            var response = await _skillService.UpdateAsync(new Update()
+            var response = await _skillService.UpdateAsync(new Domain.Skill()
             {
                 Id = request.Id,
                 Name = request.Name

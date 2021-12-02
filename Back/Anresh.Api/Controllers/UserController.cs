@@ -21,29 +21,24 @@ namespace Anresh.Api.Controllers
             _userService = userService;
         }
 
-        [HttpPost("register")]
-        [AllowAnonymous]
-        public async Task<IActionResult> RegisterAsync([FromBody] RegisterUserRequest request)
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateAsync([FromBody] CreateUserRequest request)
         {
-            var response = await _userService.RegisterAsync(new Register.Request()
+            var result = await _userService.CreateAsync(new Create()
             {
+                EmployeeId = request.EmployeeId,
                 Email = request.Email,
-                Password = request.Password,
-                EmployeeId = request.EmployeeId
+                Role = request.Role,
             });
-            return Ok(response);
+            return Ok(result);
         }
-
-        [HttpGet("confirm")]
+        
+        [HttpPost("confirm")]
         [AllowAnonymous]
-        public async Task<IActionResult> EmailConfirmAsync(string token)
+        public async Task<IActionResult> EmailConfirmAsync([FromQuery] EmailConfirmRequest request)
         {
-            var isSuccessful = await _userService.EmailConfirmAsync(token);
-            if (isSuccessful)
-            {
-                return Ok("Email confirm");
-            }
-            return BadRequest("Invalid or old token");
+            await _userService.EmailConfirmAsync(token: request.Token, password: request.Password);
+            return Ok();
         }
 
         [HttpPost("authenticate")]
@@ -52,20 +47,7 @@ namespace Anresh.Api.Controllers
         {
             var response = await _userService.AuthenticateAsync(new Authenticate.Request()
             {
-                UserName = request.Email,
-                Password = request.Password
-            });
-            return Ok(response);
-        }
-
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateAsync([FromBody] CreateUserRequest request)
-        {
-            var response = await _userService.CreateAsync(new Create.Request()
-            {
-                EmployeeId = request.EmployeeId,
                 Email = request.Email,
-                Role = request.Role,
                 Password = request.Password
             });
             return Ok(response);
