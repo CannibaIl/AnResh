@@ -1,6 +1,4 @@
-﻿using Anresh.Domain.DTO;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Anresh.Domain.Repositories
 {

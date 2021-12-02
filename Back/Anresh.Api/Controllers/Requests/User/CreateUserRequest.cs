@@ -6,7 +6,6 @@ namespace Anresh.Api.Controllers.Requests.User
     {
         public int EmployeeId {  get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
         public string Role {  get; set; }
     }
 
@@ -22,11 +21,6 @@ namespace Anresh.Api.Controllers.Requests.User
                 .EmailAddress().WithMessage("Check the spelling of the email");
 
             RuleFor(x => x.Role).NotEmpty().WithMessage("Сhoose a role");
-
-            RuleFor(x => x.Password)
-                .Must(CustomValidators.Password).WithMessage("The password is too simple")
-                .MinimumLength(6).WithMessage("The minimum password length is 6 characters")
-                .MaximumLength(20).WithMessage("The maximum password length is 20 characters");
         }
     }
 }

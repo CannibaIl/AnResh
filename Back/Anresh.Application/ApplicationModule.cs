@@ -1,4 +1,6 @@
-﻿using Anresh.Application.Services.Department.Implementations;
+﻿using Anresh.Application.Services.Auth.Implementations;
+using Anresh.Application.Services.Auth.Interfaces;
+using Anresh.Application.Services.Department.Implementations;
 using Anresh.Application.Services.Department.Interfaces;
 using Anresh.Application.Services.Employee.Implementations;
 using Anresh.Application.Services.Employee.Interfaces;
@@ -21,6 +23,7 @@ namespace Anresh.Application
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ISkillService, SkillService>();
+            services.AddScoped<IAuthService, AuthService>();
 
             return services;
         }

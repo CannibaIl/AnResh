@@ -83,10 +83,10 @@ export default {
         return;
       }
       if(!this.department) {
-        await this.$axios.post("/api/department/", this.form)
+        await this.$axios.post('/api/department/', this.form)
         .then(d => {
           d.data.response.employeeCount = 0;
-          this.$emit('row-created', d.data.response);
+          this.$emit('row-updated');
           this.show = false;
           this.$notifyInfo('CREATED DEPARTMENT',`${d.data.response.name}`);
         })
@@ -96,13 +96,10 @@ export default {
       }
       else {
         this.form.id = this.department.id;
-        await this.$axios.put("/api/department/", this.form)
+        await this.$axios.put('/api/department/', this.form)
         .then(d => {
           this.$notifyInfo('UPDATED DEPARTMENT',`${d.data.name}`);
-          this.$emit('row-updated', {
-            oldDepartment: this.department,
-            newDepartment: d.data
-          });
+          this.$emit('row-updated');
           this.show = false;
         })
         .catch(error => {

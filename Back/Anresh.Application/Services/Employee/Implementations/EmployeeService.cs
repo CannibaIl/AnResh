@@ -2,10 +2,8 @@
 using Anresh.Domain.DTO;
 using Anresh.Domain.Repositories;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Create = Anresh.Application.Services.Employee.Contracts.Create;
-using Update = Anresh.Application.Services.Employee.Contracts.Update;
+
 
 namespace Anresh.Application.Services.Employee.Implementations
 {
@@ -25,79 +23,50 @@ namespace Anresh.Application.Services.Employee.Implementations
             _departmentRepository = departmentRepository;
             _employeeSkillRepisitory = employeeSkillRepisitory;
         }
-
-        public async Task<EmployeeDto> CreateAsync(Create request)
+        //public async Task<IEnumerable<EmployeeDto>> GetAllAsync()
+        //{
+        //    return await _employeeRepository.FindAllWithDepartmentNameAndSkillsAsync();
+        //}
+        public async Task<IEnumerable<EmployeeDto>> GetAllByDepartamentIdAsync(int id)
         {
-            if (await _departmentRepository.IsExistsAsync(request.DepartmentId) == false)
+            return await _employeeRepository.FindAllByDepartmentIdWithDepartmentNameAsync(id);
+        }
+
+        public async Task<EmployeeDto> CreateAsync(EmployeeDto request)
+        {
+            if (await _departmentRepository.IsExistsAsync(request.DepartmentId) is false)
             {
                 throw new KeyNotFoundException($"Department with id: { request.DepartmentId } not found");
             }
-
-            var employe = new Domain.Employee()
-            {
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                MiddleName = request.MiddleName,
-                DepartmentId = request.DepartmentId,
-                Salary = request.Salary,
-            };
-
-            var id = await _employeeRepository.SaveAsync(employe);
-            employe.Id = id;
-            
-            if(request.Skills.Count > 0)
-            {
-                await _employeeSkillRepisitory.SaveMultipleAsync(request.Skills, employe.Id);
-            }
-
-            return new EmployeeDto()
-            {
-                Id = employe.Id,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                MiddleName = request.MiddleName,
-                DepartmentId = request.DepartmentId,
-                Salary = employe.Salary,
-                Skills = request.Skills
-            };
-        }
-
-        public async Task<EmployeeDto> UpdateAsync(Update request)
-        {
-            var employee = await _employeeRepository.FindByIdAsync(request.Id);
-            if (employee == null)
-            {
-                throw new KeyNotFoundException($"Employee with id: { request.Id } not found");
-            }
-
-            employee.FirstName = request.FirstName;
-            employee.LastName = request.LastName;
-            employee.MiddleName = request.MiddleName;
-            employee.DepartmentId = request.DepartmentId;
-            employee.Salary = request.Salary;
-
-            await _employeeRepository.UpdateAsync(employee);
+            request.Id = await _employeeRepository.SaveAsync(new Domain.Employee(request));
 
             if (request.Skills.Count > 0)
             {
                 await _employeeSkillRepisitory.SaveMultipleAsync(request.Skills, request.Id);
             }
 
-            return new EmployeeDto()
+            return request;
+        }
+
+        public async Task<EmployeeDto> UpdateAsync(EmployeeDto request)
+        {
+            if (await _employeeRepository.IsExistsAsync(request.Id) is false)
             {
-                Id = request.Id,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                MiddleName = request.MiddleName,
-                DepartmentId = request.DepartmentId,
-                Salary = request.Salary,
-                Skills = request.Skills
-            };
+                throw new KeyNotFoundException($"Employee with id: { request.Id } not found");
+            }
+            await _employeeRepository.UpdateAsync(new Domain.Employee(request));
+
+            if (request.Skills.Count > 0)
+            {
+                await _employeeSkillRepisitory.SaveMultipleAsync(request.Skills, request.Id);
+            }
+
+            return request;
         }
 
         public async Task DeleteAsync(int id)
         {
-            if (await _employeeRepository.IsExistsAsync(id) == false)
+            if (await _employeeRepository.IsExistsAsync(id) is false)
             {
                 throw new KeyNotFoundException($"Employee with id: { id } not found");
             }
@@ -117,21 +86,27 @@ namespace Anresh.Application.Services.Employee.Implementations
                 throw new KeyNotFoundException($"Employee with id: { id } not found");
             }
             return employe;
+        } 
+
+        public async Task<IEnumerable<EmployeeDto>> GetPagedAsync(PageParams pageParams)
+        {
+            return await _employeeRepository.FindWithDepartmentNameAndSkillsAsync(pageParams);
         }
 
-        public async Task<IEnumerable<EmployeeDto>> GetAllAsync()
+        public async Task<IEnumerable<EmployeeDto>> GetByDepartamentIdPagedAsyncAsync(PageParams pageParams, int id)
         {
-            return await _employeeRepository.FindAllWithDepartmentNameAndSkillsAsync();
-        }
-
-        public async Task<IEnumerable<EmployeeDto>> GetByDepartamentIdAsync(int id)
-        {
-            return await _employeeRepository.FindAllByDepartmentIdWithDepartmentNameAsync(id);
+            return await _employeeRepository.FindWithDepartmentNameAndSkillsAsync(pageParams, id);
         }
 
         public async Task DeleteAllByDepartmentIdAsync(int id)
         {
             await _employeeRepository.DeleteByDepartmentIdAsync(id);
         }
+
+        public async Task<int> GetTotalRows()
+        {
+            return await _employeeRepository.GetTotalRows();
+        }
+
     }
 }

@@ -1,11 +1,11 @@
 ﻿using Anresh.Api.Controllers.Requests.Employee;
-using Anresh.Application.Services.Employee.Contracts;
 using Anresh.Application.Services.Employee.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Anresh.Domain.DTO;
 
 namespace Anresh.Controllers
 {
@@ -20,23 +20,41 @@ namespace Anresh.Controllers
             _employeeService = employeeService;
         }
 
+        //[HttpGet]
+        //public async Task<IActionResult> GetAllAsync()
+        //{
+        //    return Ok(await _employeeService.GetAllAsync());
+        //}
+
         [HttpGet]
-        public async Task<IActionResult> GetAllAsync()
+        public async Task<IActionResult> GetPagedAsync([FromQuery] PageParams pageParams)
         {
-            return Ok(await _employeeService.GetAllAsync());
+            return Ok(await _employeeService.GetPagedAsync(pageParams));
+        }
+
+        [HttpGet("totalRows")]
+        public async Task<IActionResult> GetTotalRows()
+        {
+            return Ok(await _employeeService.GetTotalRows());
+        }
+
+        [HttpGet("all/department/{id}")]
+        public async Task<IActionResult> GetByDepartamentAsync(int id)
+        {
+            return Ok(await _employeeService.GetAllByDepartamentIdAsync(id));
         }
 
         [HttpGet("department/{id}")]
-        public async Task<IActionResult> GetByDepartamentAsync(int id)
+        public async Task<IActionResult> GetByDepartamentIdPagedAsyncAsync([FromQuery] PageParams pageParams ,int id)
         {
-            return Ok(await _employeeService.GetByDepartamentIdAsync(id));
+            return Ok(await _employeeService.GetByDepartamentIdPagedAsyncAsync(pageParams, id));
         }
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         public async Task<IActionResult> CreateAsync([FromBody] CreateEmployeeRequest request)
         {
-            var response = await _employeeService.CreateAsync(new Create()
+            var response = await _employeeService.CreateAsync(new EmployeeDto()
             {
                 FirstName = request.FirstName,
                 LastName = request.LastName,
@@ -51,7 +69,7 @@ namespace Anresh.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateAsync([FromBody] UpdateEmployeeRequest request)
         {
-            var response = await _employeeService.UpdateAsync(new Update()
+            var response = await _employeeService.UpdateAsync(new EmployeeDto()
             {
                 Id = request.Id,
                 FirstName = request.FirstName,

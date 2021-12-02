@@ -1,11 +1,25 @@
-﻿using Anresh.Domain.Shared;
+﻿using Anresh.Domain.DTO;
+using Anresh.Domain.Shared;
 
 
 namespace Anresh.Domain
 {
     [Table("Employees")]
-    public sealed class Employee : Entity<Employee, int>
+    public sealed class Employee : Entity<int>
     {
+        public Employee()
+        {
+        }
+        public Employee(EmployeeDto dto)
+        {
+            FirstName = dto.FirstName;
+            LastName = dto.LastName;
+            MiddleName = dto.MiddleName;
+            Salary = dto.Salary;
+            DepartmentId = dto.DepartmentId;
+
+        }
+
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string MiddleName { get; set; }

@@ -8,7 +8,6 @@ namespace Anresh.Domain.Repositories
         Task<IEnumerable<EmployeeDto>> FindAllByDepartmentIdWithDepartmentNameAsync(int id);
         Task TransferToDepartmentAsync(int oldDepartmentId, int newDepartmentId);
         Task DeleteByDepartmentIdAsync(int id);
-        Task<IEnumerable<EmployeeDto>> FindAllWithDepartmentNameAsync();
-        Task<IEnumerable<EmployeeDto>> FindAllWithDepartmentNameAndSkillsAsync();
+        Task<IEnumerable<EmployeeDto>> FindWithDepartmentNameAndSkillsAsync(PageParams pageParams, int? departmentId = null);
     }
 }

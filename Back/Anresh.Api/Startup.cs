@@ -28,7 +28,6 @@ namespace Anresh.Api
             services.Configure<Application.Options>(Configuration.GetSection("MyOptions"));
 
             //var sp = services.BuildServiceProvider();
-
             //var options = sp.GetService<IOptions<Application.Options>>().Value;
 
 

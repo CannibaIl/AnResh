@@ -89,8 +89,8 @@
 <script>
 export default {
   computed: {
-    userName(context) {
-      return context.$auth.user === null ? "" : this.$getFullName(context.$auth.user)
+    userName() {
+      return this.$auth.user === null ? "" : this.$getFullName(this.$auth.user)
     }
   }
 };

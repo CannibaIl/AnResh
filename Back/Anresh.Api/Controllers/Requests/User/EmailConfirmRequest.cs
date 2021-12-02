@@ -3,23 +3,18 @@ using FluentValidation;
 
 namespace Anresh.Api.Controllers.Requests.User
 {
-    public class RegisterUserRequest
+    public class EmailConfirmRequest
     {
-        public int EmployeeId { get; set; }
-        public string Email { get; set; }
+        public string Token { get; set; }
         public string Password { get; set; }
     }
 
-    public class RegisterUserRequestValidator : AbstractValidator<RegisterUserRequest>
+    public class EmailConfirmRequestValidator : AbstractValidator<EmailConfirmRequest>
     {
-        public RegisterUserRequestValidator()
+        public EmailConfirmRequestValidator()
         {
-            RuleFor(x => x.EmployeeId)
-                .NotEmpty().WithMessage("Enter employee Id");
-
-            RuleFor(x => x.Email).NotEmpty()
-                .WithMessage("Enter email")
-                .EmailAddress().WithMessage("Check the spelling of the email");
+            RuleFor(x => x.Token)
+                .NotEmpty().WithMessage("Token not found");
 
             RuleFor(x => x.Password)
                 .Must(CustomValidators.Password).WithMessage("The password is too simple")

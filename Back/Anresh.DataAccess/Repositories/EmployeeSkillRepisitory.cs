@@ -17,8 +17,9 @@ namespace Anresh.DataAccess.Repositories
         public async Task SaveMultipleAsync(List<Skill> skills, int employeeId)
         {
             var columnNames = string.Join(", ", new EmployeeSkill().GetColumns());
-            var employeesSkilsValues = string.Join(", ", skills.Select(x => $"({employeeId}, {x.Id})"));
+            var employeesSkilsValues = string.Join(", ", skills.Select(skill => $"({employeeId}, {skill.Id})"));
             var sql = $"insert into { TableName } ({columnNames}) values {employeesSkilsValues}";
+            
             await DbConnection.QueryAsync<int>(sql);
         }
     }

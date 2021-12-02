@@ -1,5 +1,4 @@
-﻿using Anresh.Application.Services.Skill.Contracts;
-using Anresh.Application.Services.Skill.Interfaces;
+﻿using Anresh.Application.Services.Skill.Interfaces;
 using Anresh.Domain.Repositories;
 using System;
 using System.Collections.Generic;
@@ -16,37 +15,26 @@ namespace Anresh.Application.Services.Skill.Implementations
             _skillRepository = skillRepository;
         }
 
-        public async Task<Domain.Skill> CreateAsync(Create request)
+        public async Task<Domain.Skill> CreateAsync(Domain.Skill request)
         {
             if (await _skillRepository.CheckNameAsync(request.Name))
             {
                 throw new Exception($"Skill {request.Name} already created!");
             }
+            request.Id = await _skillRepository.SaveAsync(request);
 
-            var skill = new Domain.Skill()
-            {
-                Name = request.Name
-            };
-
-            var id = await _skillRepository.SaveAsync(skill);
-            skill.Id = id;
-
-            return skill;
+            return request;
         }
 
-        public async Task<Domain.Skill> UpdateAsync(Update request)
+        public async Task<Domain.Skill> UpdateAsync(Domain.Skill request)
         {
-            var skill = await _skillRepository.FindByIdAsync(request.Id);
-            if (skill == null)
+            if (await _skillRepository.IsExistsAsync(request.Id) == false)
             {
                 throw new KeyNotFoundException($"Skill with id:{request.Id} not found");
             }
+            await _skillRepository.UpdateAsync(request);
 
-            skill.Name = request.Name;
-
-            await _skillRepository.UpdateAsync(skill);
-
-            return skill;
+            return request;
         }
 
         public async Task DeleteAsync(int id)

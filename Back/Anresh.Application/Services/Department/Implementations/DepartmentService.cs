@@ -1,4 +1,4 @@
-﻿using Anresh.Application.Services.Department.Contracts;
+﻿using Anresh.Application.Services.Auth.Interfaces;
 using Anresh.Application.Services.Department.Interfaces;
 using Anresh.Domain.DTO;
 using Anresh.Domain.Repositories;
@@ -12,44 +12,41 @@ namespace Anresh.Application.Services.Department.Implementations
     {
         private readonly IDepartmentRepository _departmentRepository;
         private readonly IEmployeeRepository _employeeRepository;
+        //private readonly IAuthService _authService;
 
-        public DepartmentService(IEmployeeRepository employeeRepository, IDepartmentRepository departmentRepository)
+        public DepartmentService(
+            IEmployeeRepository employeeRepository,
+            IDepartmentRepository departmentRepository
+            //,IAuthService authService
+            )
         {
             _employeeRepository = employeeRepository;
             _departmentRepository = departmentRepository;
+            //_authService = authService;
         }
 
-        public async Task<Domain.Department> CreateAsync(Create request)
+        public async Task<Domain.Department> CreateAsync(Domain.Department request)
         {
             if (await _departmentRepository.CheckNameAsync(request.Name))
             {
                 throw new Exception($"Department with name: {request.Name} already created!");
             }
 
-            var department = new Domain.Department()
-            {
-                Name = request.Name
-            };
+            var id = await _departmentRepository.SaveAsync(request);
+            request.Id = id;
 
-            var id = await _departmentRepository.SaveAsync(department);
-            department.Id = id;
-
-            return department;
+            return request;
         }
 
-        public async Task<Domain.Department> UpdateAsync(Update request)
+        public async Task<Domain.Department> UpdateAsync(Domain.Department request)
         {
-            var department = await _departmentRepository.FindByIdAsync(request.Id);
-            if (department == null)
+            if (await _departmentRepository.IsExistsAsync(request.Id) == false)
             {
                 throw new KeyNotFoundException($"Department with id:{request.Id} not found");
             }
 
-            department.Name = request.Name;
-
-            await _departmentRepository.UpdateAsync(department);
-
-            return department;
+            await _departmentRepository.UpdateAsync(request);
+            return request;
         }
 
         public async Task DeleteAsync(int id)
@@ -62,9 +59,9 @@ namespace Anresh.Application.Services.Department.Implementations
             return await _departmentRepository.FindByIdAsync(id);
         }
 
-        public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
+        public async Task<IEnumerable<DepartmentDto>> GetPagedAsync(PageParams pageParams)
         {
-            return await _departmentRepository.FindAllWithEmployeeCountAsync();
+            return await _departmentRepository.FindWithEmployeeCountAsync(pageParams);
         }
 
         public async Task<IEnumerable<Domain.Department>> GetAllSimpleAsync()
@@ -78,13 +75,17 @@ namespace Anresh.Application.Services.Department.Implementations
             {
                 throw new KeyNotFoundException($"Department with id={newDepartmentId} not found");
             }
-
-            if (!_departmentRepository.IsExistsAsync(oldDepartmentId).Result)
+            if (await _departmentRepository.IsExistsAsync(oldDepartmentId) == false)
             {
                 throw new KeyNotFoundException($"Department with id={oldDepartmentId} not found");
             }
 
             await _employeeRepository.TransferToDepartmentAsync(oldDepartmentId, newDepartmentId);
+        }
+
+        public async Task<int> GetTotalRows()
+        {
+            return await _departmentRepository.GetTotalRows();
         }
     }
 }

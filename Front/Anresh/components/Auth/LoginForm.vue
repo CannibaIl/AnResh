@@ -56,20 +56,12 @@
           >Sign in</b-button
         >
       </footer>
-      <div class="d-flex">
-        <nuxt-link
-          active-class="active"
-          class="nav-link d-flex justify-content-center mt-2"
-          to="/register"
-          >register</nuxt-link
-        >
-        <nuxt-link
+      <nuxt-link
           active-class="active"
           class="nav-link d-flex justify-content-center mt-2"
           to="/restore"
           >restore password</nuxt-link
         >
-      </div>
     </b-form>
   </div>
 </template>

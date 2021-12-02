@@ -13,10 +13,8 @@ namespace Anresh.DataAccess.Repositories
 {
     public sealed class UserRepository : GenericRepository<User, int>, IUserRepository
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        public UserRepository(IDbConnection db, IHttpContextAccessor httpContextAccessor) : base(db)
+        public UserRepository(IDbConnection db) : base(db)
         {
-            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<User> FindByEmailAsync(string email)
@@ -24,53 +22,32 @@ namespace Anresh.DataAccess.Repositories
             var sql = $"SELECT * FROM {TableName} WHERE Email = @email";
             return await DbConnection.QuerySingleOrDefaultAsync<User>(sql, new { email });
         }
-        public User GetCurrentUser()
-        {
-            var claimsPrincipal = _httpContextAccessor.HttpContext?.User;
-            if (claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier) != null)
-            {
-                var isId = int.TryParse((string)claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier).Value, out int id);
-                var isEmployeeId = int.TryParse((string)claimsPrincipal.FindFirst(ClaimTypes.Name).Value, out int employeeId);
 
-                return new User()
-                {
-                    Id = isId ? id : default,
-                    EmployeeId = isEmployeeId ? employeeId : default,
-                    Email = claimsPrincipal.FindFirst(ClaimTypes.Email).Value,
-                    Role = claimsPrincipal.FindFirst(ClaimTypes.Role).Value,
-                };
-            }
-            return null;
+        public async Task<bool> IsAdmin(int id)
+        {
+            var sql = $"SELECT u.Role FROM Users u WHERE u.Id = {id}";
+            return await DbConnection.QuerySingleOrDefaultAsync<string>(sql) == RoleConstants.Admin;
         }
 
-        public int? GetUserIdByToken(string token)
+
+        public async Task<Domain.DTO.UserDto> FindByEmployeeIdAsync(int employeeId)
         {
-            var objectId = new JwtSecurityTokenHandler()
-                                            .ReadJwtToken(token)
-                                            .Payload
-                                            .GetValueOrDefault(ClaimTypes.NameIdentifier);
-            if (objectId == null)
-            {
-                return null;
-            }
+            var sql = $@"SELECT u.*, e.* 
+                        FROM Users u LEFT JOIN Employees e ON u.EmployeeId = e.Id 
+                        WHERE u.EmployeeId = {employeeId}";
 
-            bool hasId = int.TryParse((string)objectId, out int id);
-            if (hasId == false)
-            {
-                return null;
-            }
-
-            return id;
+            return await DbConnection.QuerySingleOrDefaultAsync<Domain.DTO.UserDto>(sql);
         }
 
-        public async Task<Domain.DTO.UserDto> GetByEmployeeIdAsync(int employeeId)
+        public async Task<Domain.DTO.UserDto> FindByIdWithEmployeeDataAsync(int id)
         {
-            var sql = @"SELECT u.*, e.* 
-                         FROM Users u LEFT JOIN Employees e ON u.EmployeeId = e.Id 
-                         WHERE u.EmployeeId = @employeeId";
+            var sql = $@"SELECT u.Id, u.EmployeeId, u.Email, u.HasEmailConfirm, u.Role, e.FirstName, e.LastName, e.MiddleName, e.Salary, e.DepartmentID
+                        FROM Users u LEFT JOIN Employees e ON u.EmployeeId = e.Id 
+                        WHERE u.Id = {id}";
 
-            return await DbConnection.QuerySingleOrDefaultAsync<Domain.DTO.UserDto>(sql, new { employeeId });
+            return await DbConnection.QuerySingleOrDefaultAsync<Domain.DTO.UserDto>(sql);
         }
+
         public async Task ChangeRoleAsync(int id, string role)
         {
             var sql = @"UPDATE Users SET Role = @role WHERE Id = @id";

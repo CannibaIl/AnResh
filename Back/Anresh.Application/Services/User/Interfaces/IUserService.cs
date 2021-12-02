@@ -6,10 +6,9 @@ namespace Anresh.Application.Services.User.Interfaces
 {
     public interface IUserService
     {
-        Task<Register.Response> RegisterAsync(Register.Request request);
-        Task<bool> EmailConfirmAsync(string token);
+        Task EmailConfirmAsync(string token, string password);
         Task<Authenticate.Response> AuthenticateAsync(Authenticate.Request request);
-        Task<Create.Response> CreateAsync(Create.Request request);
+        Task<string> CreateAsync(Create request);
         Task DeleteAsync(int id);
         Task<UserDto> GetCurrentUserAsync();
         Task<UserDto> GetByEmployeeIdAsync(int employeeId);

@@ -7,7 +7,7 @@
       hide-footer
     >
       <b-form  @submit.prevent="onSubmit">
-        <div v-if="hasEmployees">
+        <div v-if="!!employees">
           <div class="table-wrap mb-3">
             <table class="table table-sm mb-0 table-borderless">
               <thead>
@@ -17,7 +17,7 @@
               </thead>
               <tbody >
                 <tr class="table-string" v-for="employee of employees" :key="employee.id">
-                  <td>{{ $getFullName(employee)}}</td>
+                  <td>{{ $getFullName(employee) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -73,7 +73,7 @@ export default {
       title: '',
       show: false,
       availableDepartments: [], 
-      employees: [],
+      employees: null,
       form: {
         isDeleteEmployees: null,
         selectedDepartmentId: null,
@@ -81,17 +81,11 @@ export default {
     };
   },
 
-  computed: {
-    hasEmployees() {
-      return this.employees.length > 0;
-    }
-  },
-
   validations: {
     form: {
       isDeleteEmployees: {
         required: requiredIf(function () {
-            return this.hasEmployees;
+            return this.employees !== null;
         })
       },
       selectedDepartmentId: {
@@ -103,16 +97,18 @@ export default {
   },
 
   methods: {
-    open(department) {
+    async open(department) {
         this.department = department
         this.title = `Delete ${department.name}`
         this.form.isDeleteEmployees = null;
         this.availableDepartments = this.departments.filter(d => d !== department);
-
-        this.$axios.get(`/api/employee/department/${department.id}`).then(({ data }) => {
+        
+        if(department.employeeCount > 0) {
+          const {data} = await this.$axios.get(`/api/employee/all/department/${department.id}`);
           this.employees = data;
-          this.show = true
-        })
+        }
+        
+        this.show = true;
     },
 
     validateState(name) {
@@ -125,6 +121,7 @@ export default {
         selectedDepartmentId: null,
         isDeleteEmployees: null
       }
+      this.employees = null;
       this.$nextTick(() => {
         this.$v.$reset();
       });
@@ -134,7 +131,7 @@ export default {
       this.$axios.delete("/api/department/" + id)
           .then(() => {
             this.show = false;
-            this.$emit('row-deleted', id);
+            this.$emit('row-updated');
             this.$notifyWarn('DELETED DEPARTMENT',`${this.department.name}`);
             })
           .catch(error => {
@@ -142,17 +139,17 @@ export default {
           });
     },
 
-    onSubmit() {     
-      if (this.$v.form.$anyError && this.hasEmployees === true) {
+    onSubmit() {
+      if (this.$v.form.$anyError && this.employees === null) {
          return;
       }
-
       const id = this.department.id;
-      if(this.hasEmployees === false) {
+      if(this.employees === null) {
         this.deleteDepartment(id);
-      } else {
-        if(this.form.isDeleteEmployees === true) {
-          this.$axios.delete("/api/employee/department/" + id)
+      } 
+      else {
+        if(this.form.isDeleteEmployees) {
+          this.$axios.delete('/api/employee/department/' + id)
             .then(() => {
               this.$notifyWarn('DELETED EMPLOYEES FROM THE DEPARTMENT:',`${this.department.name}`);
               this.deleteDepartment(id);
@@ -160,13 +157,15 @@ export default {
             .catch(error => {
                 this.$notifyError('ERROR',`${error}`);
             });
-        } else {
+        } 
+        
+        else {
           let payload = { oldDepartmentId: id, newDepartmentId: this.form.selectedDepartmentId };
           this.$axios.put("/api/department/move-employees", payload)
             .then(({ data }) => {
               this.$notifyInfo('EMPLOYEES HAS BEEN TRANSFERRED!','');
               this.deleteDepartment(id);
-              this.$emit('transfer-completed', data);
+              this.$emit('row-updated');
             })
             .catch(error => {
                 this.$notifyError('ERROR',`${error}`);
@@ -178,44 +177,3 @@ export default {
   }
 };
 </script>
-
-<style lang="scss" scoped>
-.table-wrap {
-  background-color: #404958;
-  border-radius: 7px;
-  overflow: hidden;
-  padding: 8px;
-  table {
-    
-    thead {
-      color: #fff;
-    }
-    tbody {
-      background-color: #404958;
-      tr {
-        background-color: #404958;
-        td{
-          background-color: #fff;
-        }
-        &:first-child {
-          td {
-            border-top-left-radius: 7px;
-            border-top-right-radius: 7px;
-            overflow: hidden;
-          }
-        }
-        &:last-child {
-          td {
-            border-bottom-left-radius: 7px;
-            border-bottom-right-radius: 7px;
-            overflow: hidden;
-          } 
-        }
-      }
-      
-      
-    }
-  }
-}
-  
-</style>
