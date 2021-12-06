@@ -212,3 +212,44 @@ button {
     }
   }
 }
+
+
+
+.department-parents-wrap {
+  color: #888;
+  
+  label {
+    cursor: pointer;
+    &:hover {
+      color: #333;
+    }
+  }
+  label:last-child {
+    color: #000;
+  }
+}
+.select-department {
+  color: #000;
+  overflow-y: scroll;
+  height: 122px;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  padding: 0;
+  li {
+    list-style: none;
+    width: 100%;
+    padding: 0 1rem;
+    cursor: pointer;
+    &:hover {
+     background-color: #eeeeee;
+    }
+    
+  }
+  .active-department {
+    background-color: #0062cc;
+    color: #fff;
+    &:hover {
+     background-color: #085ab3;
+    }
+  }
+}

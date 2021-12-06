@@ -48,7 +48,7 @@ namespace Anresh.DataAccess.Repositories
                          FROM Employees e JOIN Departments d ON e.DepartmentID = d.Id
                          LEFT JOIN EmployeesSkills es ON e.Id = es.EmployeeId
 
-                         {(departmentId != null ? $"WHERE e.DepartmentID = {departmentId}" : "")}
+                         {(departmentId is not null ? $"WHERE e.DepartmentID = {departmentId}" : "")}
 
                          GROUP BY e.Id, e.FirstName, e.LastName, e.MiddleName, e.Salary, e.DepartmentID, d.Name
                          ORDER BY {pageParams.OrderBy} {pageParams.AscDesc}
@@ -56,10 +56,10 @@ namespace Anresh.DataAccess.Repositories
                          
                          SELECT * FROM #EmployeesDetails;
                          
-                         SELECT e.Id as EmployeeId, s.Id , s.Name
+                         SELECT e.Id as EmployeeId, s.Id as SkillId ,s.Name
                          FROM #EmployeesDetails e 
-                         LEFT JOIN EmployeesSkills es ON e.Id = es.EmployeeId
-                         LEFT JOIN Skills s ON es.SkillId = s.Id; ";
+                         JOIN EmployeesSkills es ON e.Id = es.EmployeeId
+                         JOIN Skills s ON es.SkillId = s.Id; ";
 
             var multi = await DbConnection.QueryMultipleAsync(sql).ConfigureAwait(false);
 
@@ -71,8 +71,8 @@ namespace Anresh.DataAccess.Repositories
                                                                  Name = skill.Name
                                                              }).ToList();
             groupSkills.ForEach(skills =>
-                                employees.FirstOrDefault(e => e.Id == skills.Key)
-                                .Skills = skills.ToList());
+                                employees.First(e => e.Id == skills.Key)
+                               .Skills = skills.ToList());
 
             return employees;
         }

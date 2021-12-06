@@ -11,6 +11,6 @@ namespace Anresh.Domain.DTO
         public decimal Salary { get; set; }
         public int DepartmentId { get; set; }
         public string DepartmentName { get; set; }
-        public List<Skill> Skills {  get; set; }
+        public List<Skill> Skills { get; set; }
     }
 }

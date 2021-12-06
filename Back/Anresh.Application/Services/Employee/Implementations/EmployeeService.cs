@@ -2,6 +2,7 @@
 using Anresh.Domain.DTO;
 using Anresh.Domain.Repositories;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 
@@ -23,10 +24,7 @@ namespace Anresh.Application.Services.Employee.Implementations
             _departmentRepository = departmentRepository;
             _employeeSkillRepisitory = employeeSkillRepisitory;
         }
-        //public async Task<IEnumerable<EmployeeDto>> GetAllAsync()
-        //{
-        //    return await _employeeRepository.FindAllWithDepartmentNameAndSkillsAsync();
-        //}
+
         public async Task<IEnumerable<EmployeeDto>> GetAllByDepartamentIdAsync(int id)
         {
             return await _employeeRepository.FindAllByDepartmentIdWithDepartmentNameAsync(id);
@@ -56,9 +54,25 @@ namespace Anresh.Application.Services.Employee.Implementations
             }
             await _employeeRepository.UpdateAsync(new Domain.Employee(request));
 
+            var employeeSkills = await _employeeSkillRepisitory.FindByEmployeeIdAsync(request.Id);
+            
             if (request.Skills.Count > 0)
             {
-                await _employeeSkillRepisitory.SaveMultipleAsync(request.Skills, request.Id);
+                var deleteSkillsList = employeeSkills.Where(x => request.Skills.Any(r => r.Id == x.SkillId) is false).Select(x => x.Id);
+                if (deleteSkillsList.Any())
+                {
+                    await _employeeSkillRepisitory.DeleteMultipleAsync(deleteSkillsList);
+                }
+
+                var addSkillsList = request.Skills.Where(x => employeeSkills.Any(e => e.SkillId == x.Id) is false).ToList();
+                if (addSkillsList.Any())
+                {
+                    await _employeeSkillRepisitory.SaveMultipleAsync(addSkillsList, request.Id);
+                } 
+            }
+            else if (employeeSkills.Any())
+            {
+                await _employeeSkillRepisitory.DeleteMultipleAsync(employeeSkills.Select(x => x.Id));
             }
 
             return request;

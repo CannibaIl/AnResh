@@ -5,6 +5,7 @@ namespace Anresh.Api.Controllers.Requests.Department
     public class UpdateDepartmentRequest
     {
         public int Id { get; set; }
+        public int ParentId {  get; set; }
         public string Name { get; set; }
     }
     public class UpdateDepartmentRequestValidator : AbstractValidator<UpdateDepartmentRequest>

@@ -1,5 +1,4 @@
-﻿using Anresh.Application.Services.Auth.Interfaces;
-using Anresh.Application.Services.Department.Interfaces;
+﻿using Anresh.Application.Services.Department.Interfaces;
 using Anresh.Domain.DTO;
 using Anresh.Domain.Repositories;
 using System;
@@ -40,7 +39,7 @@ namespace Anresh.Application.Services.Department.Implementations
 
         public async Task<Domain.Department> UpdateAsync(Domain.Department request)
         {
-            if (await _departmentRepository.IsExistsAsync(request.Id) == false)
+            if (await _departmentRepository.IsExistsAsync(request.Id) is false)
             {
                 throw new KeyNotFoundException($"Department with id:{request.Id} not found");
             }
@@ -69,15 +68,30 @@ namespace Anresh.Application.Services.Department.Implementations
             return await _departmentRepository.FindAllAsync();
         }
 
+        public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
+        {
+            return await _departmentRepository.FindAllWithEmployeeCountAsync();
+        }
+
+        public async Task<IEnumerable<DepartmentSimpleDto>> GetSimpleByParentIdAsync(int parentId)
+        {
+            return await _departmentRepository.FindSimpleByParentIdAsync(parentId);
+        }
+
+        public async Task<DepartmentSimpleChildrenAndParentsDto> GetSimpleParentsTreeAndParentChildrenByChildIdAsync(int childId)
+        {
+            return await _departmentRepository.FindSimpleParentsTreeAndParentChildrenByChildIdAsync(childId);
+        }
+
         public async Task MoveEmployeesAsync(int oldDepartmentId, int newDepartmentId)
         {
-            if (await _departmentRepository.IsExistsAsync(newDepartmentId) == false)
+            if (await _departmentRepository.IsExistsAsync(newDepartmentId) is false)
             {
-                throw new KeyNotFoundException($"Department with id={newDepartmentId} not found");
+                throw new KeyNotFoundException($"Department with id: {newDepartmentId} not found");
             }
-            if (await _departmentRepository.IsExistsAsync(oldDepartmentId) == false)
+            if (await _departmentRepository.IsExistsAsync(oldDepartmentId) is false)
             {
-                throw new KeyNotFoundException($"Department with id={oldDepartmentId} not found");
+                throw new KeyNotFoundException($"Department with id: {oldDepartmentId} not found");
             }
 
             await _employeeRepository.TransferToDepartmentAsync(oldDepartmentId, newDepartmentId);

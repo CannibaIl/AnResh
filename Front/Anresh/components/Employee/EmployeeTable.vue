@@ -215,7 +215,7 @@ export default {
 <style lang="scss" scoped>
 .employee-skill-td {
   .employee-skill-item::after {
-    content: ", ";
+    content: ", ";
     position: relative;
     right: 2px;
   }

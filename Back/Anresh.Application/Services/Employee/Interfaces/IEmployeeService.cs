@@ -6,12 +6,10 @@ namespace Anresh.Application.Services.Employee.Interfaces
 {
     public interface IEmployeeService
     {
-        //Task<IEnumerable<EmployeeDto>> GetAllAsync();
         Task<IEnumerable<EmployeeDto>> GetAllByDepartamentIdAsync(int id);
         Task<IEnumerable<EmployeeDto>> GetPagedAsync(PageParams pageConstructor);
         Task<IEnumerable<EmployeeDto>> GetByDepartamentIdPagedAsyncAsync(PageParams pageParams, int id);
         Task<Domain.Employee> GetByIdAsync(int id);
-
         Task<EmployeeDto> CreateAsync(EmployeeDto request);
         Task<EmployeeDto> UpdateAsync(EmployeeDto request);
         Task DeleteAsync(int id);

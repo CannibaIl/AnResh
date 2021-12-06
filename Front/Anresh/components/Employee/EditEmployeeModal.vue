@@ -1,11 +1,6 @@
 <template>
   <section>
-    <b-modal
-      v-model="show"
-      :title="title"
-      @hidden="resetModal"
-      hide-footer
-    >
+    <b-modal v-model="show" :title="title" @hidden="resetModal" hide-footer>
       <b-card no-body>
         <b-tabs card>
           <b-tab :title="title + ' data'" active>
@@ -84,7 +79,7 @@
                   </b-form-invalid-feedback>
                 </b-form-group>
 
-                <b-form-group label="Department*">
+                <!-- <b-form-group label="Department*">
                   <b-form-select
                     v-model="$v.form.departmentId.$model"
                     :options="departments"
@@ -96,17 +91,50 @@
                       >-- Please select department --</b-form-select-option
                     >
                   </b-form-select>
-                </b-form-group>
+                </b-form-group> -->
+                <!-- *************************************************************************************************************** -->
 
+                <div class="department-parents-wrap">
+                  <label @click="setdepartments(null, null)">/ root</label>
+                  <label
+                    class="d-inline mr-1"
+                    v-for="(departmentParent, index) in departmentParents"
+                    :key="departmentParent.name"
+                    @click="setdepartments(departmentParent, index)"
+                    >/ {{ departmentParent.name }}
+                  </label>
+                  <label> *</label>
+
+                  <ul class="select-department">
+                    <li
+                      v-for="department in departments"
+                      :key="department.id"
+                      @click="setdepartments(department, null)"
+                      :class="
+                        department.id === form.departmentId
+                          ? 'active-department'
+                          : '' " >
+                      {{ department.name }}
+                    </li>
+                  </ul>
+                </div>
+                <div
+                  class="invalid-feedback d-block"
+                  v-if="form.departmentId === null"
+                >
+                  his field is required.
+                </div>
+
+                <!-- *************************************************************************************************************** -->
                 <b-form-group label="Skills:">
                   <label
                     class="d-inline mr-1"
                     v-for="skill in selectedSkills"
-                    :key="skill.name"
+                    :key="skill.name + skill.id"
                     >{{ skill.name }},
                   </label>
                   <div class="select-skill">
-                    <span v-for="skill in skills" :key="skill.id">
+                    <span v-for="skill in skills" :key="skill.id + skill.name">
                       <b-form-checkbox v-model="form.skills" :value="skill">{{
                         skill.name
                       }}</b-form-checkbox>
@@ -216,6 +244,7 @@ export default {
       employee: null,
       title: "",
       departments: [],
+      departmentParents: [],
       skills: [],
       form: {
         firstName: null,
@@ -275,11 +304,7 @@ export default {
     async open(employee) {
       this.disabledAccountTab = !!employee ? false : true;
       this.title = !!employee ? "Edit" : "Create";
-      this.show = true;
 
-      await this.$axios.get("/api/department/simple").then((d) => {
-        this.departments = d.data;
-      });
       let skillUri = "/api/skill";
       await this.$axios.get(skillUri).then((d) => {
         this.skills = d.data;
@@ -304,11 +329,51 @@ export default {
         this.account.role = data?.role;
         this.handleAccountButton = !!data.email ? "Change role" : "Create";
       }
+      const departmentId =
+        this.form.departmentId === null ? 0 : this.form.departmentId;
+      let { data } = await this.$axios.get(
+        `/api/department/childrenAndParents/childId/${departmentId}`
+      );
+      this.departments = data.children;
+      this.departmentParents = data.parents;
+
+      this.show = true;
     },
     formatter(value) {
       if (value[0] !== undefined) {
         return value[0].toUpperCase() + value.slice(1).toLowerCase();
       }
+    },
+
+    async setdepartments(department, index) {
+      const departmentId = department === null ? 0 : department.id;
+      let { data } = await this.$axios.get(
+        `/api/department/parentId/${departmentId}`
+      );
+      if (data.length > 0) {
+        this.departments = data;
+      }
+
+      if (department === null && index === null) {
+        this.form.departmentId = null;
+        this.departmentParents = [];
+        return;
+      }
+
+      const parentsLength = this.departmentParents.length;
+      const lastParent = this.departmentParents[parentsLength - 1];
+      if (index !== null) {
+        this.departmentParents.splice(index + 1, parentsLength - 1 - index);
+      } else {
+        if (
+          lastParent !== undefined &&
+          lastParent.parentId === department.parentId
+        ) {
+          this.departmentParents.splice(-1);
+        }
+        this.departmentParents.push(department);
+      }
+      this.form.departmentId = departmentId;
     },
 
     validateState(name) {
@@ -345,7 +410,7 @@ export default {
         await this.$axios
           .post("/api/employee/", this.form)
           .then((d) => {
-            const departmentName = this.departments.find(
+            const departmentName = this.departmentParents.find(
               (el) => el.id === this.form.departmentId
             ).name;
             d.data.response.departmentName = departmentName;
@@ -386,7 +451,7 @@ export default {
         var request = {
           employeeId: this.employee.id,
           email: this.account.email,
-          role: this.account.role
+          role: this.account.role,
         };
         await this.$axios
           .post("/api/user/create", request)
