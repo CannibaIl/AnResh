@@ -10,7 +10,7 @@ namespace Anresh.Controllers
 {
     [Route("api/department")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class DepartamentController : Controller
     {
         private readonly IDepartmentService _departmentService;
@@ -25,11 +25,6 @@ namespace Anresh.Controllers
             return Ok(await _departmentService.GetSimpleByIdAsync(id));
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> GetAllAsync()
-        //{
-        //    return Ok(await _departmentService.GetAllAsync());
-        //}
         [HttpGet]
         public async Task<IActionResult> GetPagedAsync([FromQuery] Domain.DTO.PageParams pageParams)
         {
@@ -48,13 +43,32 @@ namespace Anresh.Controllers
             return Ok(await _departmentService.GetAllSimpleAsync());
         }
 
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllAsync()
+        {
+            return Ok(await _departmentService.GetAllAsync());
+        }
+
+        [HttpGet("parentId/{id}")]
+        public async Task<IActionResult> GetSimpleByParentIdAsync(int id)
+        {
+            return Ok(await _departmentService.GetSimpleByParentIdAsync(id));
+        }
+
+        [HttpGet("childrenAndParents/childId/{id}")]
+        public async Task<IActionResult> GetSimpleParentsTreeAndParentChildrenByChildIdAsync(int id)
+        {
+            return Ok(await _departmentService.GetSimpleParentsTreeAndParentChildrenByChildIdAsync(id));
+        }
+
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         public async Task<IActionResult> CreateAsync([FromBody] CreateDepartmentRequest request)
         {
             var response = await _departmentService.CreateAsync(new Domain.Department()
             {
-                Name = request.Name
+                Name = request.Name,
+                ParentId = request.ParentId
             });
             return Created($"api/department/{response.Id}", new { response });
         }
@@ -65,6 +79,7 @@ namespace Anresh.Controllers
             var response = await _departmentService.UpdateAsync(new Domain.Department()
             {
                 Id = request.Id,
+                ParentId = request.ParentId,
                 Name = request.Name
             });
 

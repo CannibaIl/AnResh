@@ -12,6 +12,7 @@ namespace Anresh.Domain
         }
         public Employee(EmployeeDto dto)
         {
+            Id = dto.Id;
             FirstName = dto.FirstName;
             LastName = dto.LastName;
             MiddleName = dto.MiddleName;

@@ -8,5 +8,8 @@ namespace Anresh.Domain.Repositories
     {
         Task<bool> CheckNameAsync(string name);
         Task<IEnumerable<DepartmentDto>> FindWithEmployeeCountAsync(PageParams pageParams);
+        Task<IEnumerable<DepartmentDto>> FindAllWithEmployeeCountAsync();
+        Task<IEnumerable<DepartmentSimpleDto>> FindSimpleByParentIdAsync(int parentId);
+        Task<DepartmentSimpleChildrenAndParentsDto> FindSimpleParentsTreeAndParentChildrenByChildIdAsync(int childId);
     }
 }

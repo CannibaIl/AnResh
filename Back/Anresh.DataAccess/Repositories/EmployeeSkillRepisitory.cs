@@ -14,6 +14,11 @@ namespace Anresh.DataAccess.Repositories
         public EmployeeSkillRepisitory(IDbConnection db) : base(db)
         {
         }
+        public async Task<IEnumerable<EmployeeSkill>> FindByEmployeeIdAsync(int employeeId)
+        {
+            var sql = $"SELECT * FROM {TableName} WHERE EmployeeId = @employeeId";
+            return await DbConnection.QueryAsync<EmployeeSkill>(sql, new { employeeId });
+        }
         public async Task SaveMultipleAsync(List<Skill> skills, int employeeId)
         {
             var columnNames = string.Join(", ", new EmployeeSkill().GetColumns());
