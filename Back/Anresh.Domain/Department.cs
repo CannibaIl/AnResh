@@ -1,10 +1,21 @@
 ﻿using Anresh.Domain.Shared;
-using System;
+using Anresh.Domain.DTO;
 
 namespace Anresh.Domain
 {
-    public class Department : Entity<int>
+    [Table("Departments")]
+    public sealed class Department : Entity<int>
     {
-        public string Name {  get; set; }
+        public Department()
+        {
+        }
+        public Department(DepartmentDto dto)
+        {
+            Id = dto.Id;
+            Name = dto.Name;
+            ParentId = dto.ParentId;
+        }
+        public string Name { get; set; }
+        public int? ParentId {  get; set; }
     }
 }

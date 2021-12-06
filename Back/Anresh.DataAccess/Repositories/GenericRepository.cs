@@ -1,11 +1,10 @@
 ﻿using Anresh.Domain.Repositories;
 using Anresh.Domain.Shared;
 using Dapper;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Anresh.DataAccess.Repositories
@@ -14,47 +13,70 @@ namespace Anresh.DataAccess.Repositories
     {
         protected readonly IDbConnection DbConnection;
         protected string TableName;
-        private protected GenericRepository(IDbConnection dbConnection, string departments)
+        private protected GenericRepository(IDbConnection dbConnection)
         {
             DbConnection = dbConnection;
-            TableName = departments;
-        }
-        private static IEnumerable<string> GetColumns()
-        {
-            return typeof(TEntity)
-                    .GetProperties()
-                    .Where(e => e.Name != "Id" && !e.PropertyType.GetTypeInfo().IsGenericType)
-                    .Select(e => e.Name);
-        }
-        public async Task<TId> Save(TEntity entity)
-        {
-            var columns = GetColumns();
-            var stringOfColumns = string.Join(", ", columns);
-            var stringOfParameters = string.Join(", ", columns.Select(e => "@" + e));
-            var query = await DbConnection.QueryAsync<TId>($"insert into {TableName} ({stringOfColumns}) OUTPUT INSERTED.* values ({stringOfParameters})", entity);
-
-            var id = query.First();
-            return id;
+            
+            var tableAttribute = (TableAttribute)typeof(TEntity).GetCustomAttributes(typeof(TableAttribute), false).FirstOrDefault();
+            if (tableAttribute == null)
+            {
+                throw new Exception("table attribute not found");
+            }
+            TableName = tableAttribute.Table;
         }
 
-        public async Task Update(TEntity entity)
+        public async Task<TId> SaveAsync(TEntity entity)
         {
-            var columns = GetColumns();
-            var stringOfColumns = string.Join(", ", columns.Select(e => $"{e} = @{e}"));
-            await DbConnection.ExecuteAsync($"UPDATE {TableName} SET {stringOfColumns} WHERE Id = @Id", entity);
+            var columnNames = string.Join(", ", entity.GetColumns());
+            var parameterNames = string.Join(", ", entity.GetColumns().Select(e => "@" + e));
+            var sql = $"INSERT INTO { TableName } ({columnNames}) OUTPUT INSERTED.* VALUES ({parameterNames})";
+            var query = await DbConnection.QueryAsync<TId>(sql, entity);
+
+            return query.First();
         }
-        public async Task Delete(TId id, CancellationToken cancellation)
+
+        public async Task UpdateAsync(TEntity entity)
         {
-            await DbConnection.ExecuteAsync($"DELETE FROM {TableName} WHERE Id = {id}", cancellation);
+            var columnNames = string.Join(", ", entity.GetColumns().Select(e => $"{e} = @{e}"));
+            var sql = $"UPDATE { TableName } SET {columnNames} WHERE Id = {entity.Id}";
+            await DbConnection.ExecuteAsync(sql, entity);
         }
-        public async Task<TEntity> FindById(TId id, CancellationToken cancellationToken)
+
+        public async Task DeleteAsync(TId id)
         {
-            return await DbConnection.QueryFirstOrDefaultAsync<TEntity>($"SELECT * FROM {TableName} WHERE Id = {id}", cancellationToken);
+            var sql = $"DELETE FROM {TableName} WHERE Id = @id";
+            await DbConnection.ExecuteAsync(sql, new { id });
         }
-        public async Task<List<TEntity>> FindAll(CancellationToken cancellationToken)
+
+        public async Task DeleteMultipleAsync(IEnumerable<TId> listId)
         {
-            var data = await DbConnection.QueryAsync<TEntity>($"SELECT * FROM {TableName}", cancellationToken);
-            return data.ToList();
+            var stringOfIds = string.Join(", ", listId);
+            var sql = $"DELETE FROM { TableName } WHERE Id IN ({stringOfIds})";
+            await DbConnection.ExecuteAsync(sql);
+        }
+
+        public async Task<IEnumerable<TEntity>> FindAllAsync()
+        {
+            var sql = $"SELECT * FROM {TableName}";
+            return await DbConnection.QueryAsync<TEntity>(sql);
+        }
+
+        public async Task<TEntity> FindByIdAsync(int id)
+        {
+            var sql = $@"SELECT * FROM {TableName} WHERE Id = @id";
+            return await DbConnection.QuerySingleOrDefaultAsync<TEntity>(sql, new { id });
+        }
+
+        public async Task<bool> IsExistsAsync(TId id)
+        {
+            var sql = $"SELECT COUNT(1) FROM {TableName} WHERE Id = {id}";
+            return await DbConnection.ExecuteScalarAsync<bool>(sql);
+        }
+
+        public async Task<int> GetTotalRows()
+        {
+            var sql = $@"SELECT count(t.Id) FROM {TableName} t";
+            return await DbConnection.QuerySingleOrDefaultAsync<int>(sql);
         }
     }
 }

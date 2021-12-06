@@ -1,10 +1,8 @@
-﻿using Anresh.Application.Services.Department.Contracts;
-using Anresh.Application.Services.Department.Interfaces;
+﻿using Anresh.Application.Services.Department.Interfaces;
 using Anresh.Domain.DTO;
 using Anresh.Domain.Repositories;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Anresh.Application.Services.Department.Implementations
@@ -12,52 +10,96 @@ namespace Anresh.Application.Services.Department.Implementations
     public sealed class DepartmentService : IDepartmentService
     {
         private readonly IDepartmentRepository _departmentRepository;
-        public DepartmentService(IDepartmentRepository departmentRepository)
+        private readonly IEmployeeRepository _employeeRepository;
+        //private readonly IAuthService _authService;
+
+        public DepartmentService(
+            IEmployeeRepository employeeRepository,
+            IDepartmentRepository departmentRepository
+            //,IAuthService authService
+            )
         {
+            _employeeRepository = employeeRepository;
             _departmentRepository = departmentRepository;
+            //_authService = authService;
         }
 
-        public async Task<DepartmentDTO> Create(Create.Request request, CancellationToken cancellationToken)
+        public async Task<Domain.Department> CreateAsync(Domain.Department request)
         {
-            if(await _departmentRepository.CheckName(request.Name, cancellationToken))
+            if (await _departmentRepository.CheckNameAsync(request.Name))
             {
-                throw new Exception($"Отдел с именем: {request.Name} уже создан!");
-            }
-            var department = new Domain.Department()
-            {
-                Name = request.Name
-            };
-            var id = await _departmentRepository.Save(department);
-
-            return await _departmentRepository.FindByIdWithEmployees(id, cancellationToken);
-        }
-        public async Task<DepartmentDTO> Update(Update.Request request, CancellationToken cancellationToken)
-        {
-            if (await _departmentRepository.FindById(request.Id, cancellationToken) == null)
-            {
-                throw new KeyNotFoundException($"Отдел с id:{request.Id} не найден");
+                throw new Exception($"Department with name: {request.Name} already created!");
             }
 
-            var department = new Domain.Department()
-            {
-                Id = request.Id,
-                Name = request.Name
-            };
-            await _departmentRepository.Update(department);
-            return await _departmentRepository.FindByIdWithEmployees(request.Id, cancellationToken);
-        }
-        public async Task Delete(int id, CancellationToken cancellationToken)
-        {
-            await _departmentRepository.Delete(id, cancellationToken);
+            var id = await _departmentRepository.SaveAsync(request);
+            request.Id = id;
+
+            return request;
         }
 
-        public async Task<IEnumerable<DepartmentDTO>> GetAll(CancellationToken cancellationToken)
+        public async Task<Domain.Department> UpdateAsync(Domain.Department request)
         {
-            return await _departmentRepository.FindAllWithEmployees(cancellationToken);
+            if (await _departmentRepository.IsExistsAsync(request.Id) is false)
+            {
+                throw new KeyNotFoundException($"Department with id:{request.Id} not found");
+            }
+
+            await _departmentRepository.UpdateAsync(request);
+            return request;
         }
-        public async Task<IEnumerable<Domain.Department>> GetAllLight(CancellationToken cancellationToken)
+
+        public async Task DeleteAsync(int id)
         {
-            return await _departmentRepository.FindAll(cancellationToken);
+            await _departmentRepository.DeleteAsync(id);
+        }
+
+        public async Task<Domain.Department> GetSimpleByIdAsync(int id)
+        {
+            return await _departmentRepository.FindByIdAsync(id);
+        }
+
+        public async Task<IEnumerable<DepartmentDto>> GetPagedAsync(PageParams pageParams)
+        {
+            return await _departmentRepository.FindWithEmployeeCountAsync(pageParams);
+        }
+
+        public async Task<IEnumerable<Domain.Department>> GetAllSimpleAsync()
+        {
+            return await _departmentRepository.FindAllAsync();
+        }
+
+        public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
+        {
+            return await _departmentRepository.FindAllWithEmployeeCountAsync();
+        }
+
+        public async Task<IEnumerable<DepartmentSimpleDto>> GetSimpleByParentIdAsync(int parentId)
+        {
+            return await _departmentRepository.FindSimpleByParentIdAsync(parentId);
+        }
+
+        public async Task<DepartmentSimpleChildrenAndParentsDto> GetSimpleParentsTreeAndParentChildrenByChildIdAsync(int childId)
+        {
+            return await _departmentRepository.FindSimpleParentsTreeAndParentChildrenByChildIdAsync(childId);
+        }
+
+        public async Task MoveEmployeesAsync(int oldDepartmentId, int newDepartmentId)
+        {
+            if (await _departmentRepository.IsExistsAsync(newDepartmentId) is false)
+            {
+                throw new KeyNotFoundException($"Department with id: {newDepartmentId} not found");
+            }
+            if (await _departmentRepository.IsExistsAsync(oldDepartmentId) is false)
+            {
+                throw new KeyNotFoundException($"Department with id: {oldDepartmentId} not found");
+            }
+
+            await _employeeRepository.TransferToDepartmentAsync(oldDepartmentId, newDepartmentId);
+        }
+
+        public async Task<int> GetTotalRows()
+        {
+            return await _departmentRepository.GetTotalRows();
         }
     }
 }

@@ -5,66 +5,104 @@ using Dapper;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Anresh.DataAccess.Repositories
 {
     public sealed class DepartmentRepository : GenericRepository<Department, int>, IDepartmentRepository
     {
-        public DepartmentRepository(IDbConnection db) : base(db, TableNames.Departments)
+        public DepartmentRepository(IDbConnection db) : base(db)
         {
         }
 
-        public async Task<bool> CheckName(string name, CancellationToken cancellationToken)
+        public async Task<bool> CheckNameAsync(string name)
         {
-            var department = await DbConnection.QueryFirstOrDefaultAsync<Department>($"SELECT * FROM {TableName} WHERE Name = '{name}'", cancellationToken);
-            if (department == null)
-                return false;
-            else
-                return true;
+            var sql = $"SELECT COUNT(1) FROM {TableName} WHERE Name = @name";
+            return await DbConnection.ExecuteScalarAsync<bool>(sql, new { name });
         }
 
-        public async Task<IEnumerable<DepartmentDTO>> FindAllWithEmployees(CancellationToken cancellationToken)
+        public async Task<IEnumerable<DepartmentDto>> FindWithEmployeeCountAsync(PageParams pageParams)
         {
-            string sql = $@"SELECT d.*, e.* FROM {TableNames.Departments} d LEFT JOIN {TableNames.Employees} e ON d.Id = e.DepartmentId";
+            var sql = $@"SELECT d.*, count(e.Id) as EmployeeCount, AVG(e.Salary) AS AverageSalary
+                         FROM Departments d LEFT OUTER JOIN Employees e ON d.Id = e.DepartmentID
+                         GROUP BY d.Id, d.ParentId, d.Name
+                         ORDER BY {pageParams.OrderBy} {pageParams.AscDesc}
+                         OFFSET {pageParams.Skip} ROWS FETCH NEXT {pageParams.Take} ROWS ONLY;";
 
-            var dictionary = new Dictionary<int, DepartmentDTO>();
+            return await DbConnection.QueryAsync<DepartmentDto>(sql);
+        }
+        public async Task<IEnumerable<DepartmentSimpleDto>> FindSimpleByParentIdAsync(int parentId)
+        {
+            var sql = $@"SELECT d.*
+                         FROM Departments d
+                         WHERE d.ParentId {(parentId == 0 ? "IS NULL" : $" = {parentId}")}
+                         GROUP BY d.Id, d.ParentId, d.Name";
 
-            var departments = await DbConnection.QueryAsync<DepartmentDTO, Employee, DepartmentDTO>(
-                sql, (d, e) => {
-                    if (!dictionary.TryGetValue(d.Id, out DepartmentDTO department))
-                        dictionary.Add(d.Id, department = d);
-
-                    if (department.Employees == null)
-                        department.Employees = new List<Employee>();
-                    
-                    department.Employees.Add(e);
-                    return department;
-                }, cancellationToken);
-    
-            return dictionary.Values;
+            return await DbConnection.QueryAsync<DepartmentSimpleDto>(sql);
         }
 
-        public async Task<DepartmentDTO> FindByIdWithEmployees(int id, CancellationToken cancellationToken)
+        public async Task<DepartmentSimpleChildrenAndParentsDto> FindSimpleParentsTreeAndParentChildrenByChildIdAsync(int childId)
         {
-            string sql = $@"SELECT d.*, e.* FROM {TableNames.Departments} d LEFT JOIN {TableNames.Employees} e ON d.Id = e.DepartmentId WHERE d.Id = {id} ";
+            var sql = $@"CREATE TABLE #parents ( Id INT , Name NVARCHAR(20), ParentId INT)
+                         DECLARE @ParentId INT;
+                         SET @ParentId = (SELECT ParentId FROM Departments WHERE Id = {childId})
 
-            var dictionary = new Dictionary<int, DepartmentDTO>();
+                         SELECT * FROM Departments WHERE ISNULL(ParentId, 0) = ISNULL(@ParentId, 0);
 
-            var departments = await DbConnection.QueryAsync<DepartmentDTO, Employee, DepartmentDTO>(
-                sql, (d, e) => {
-                    if (!dictionary.TryGetValue(d.Id, out DepartmentDTO department))
-                        dictionary.Add(d.Id, department = d);
+                         WHILE @ParentId is not null
+                         BEGIN
+	                     	INSERT INTO #parents
+                             SELECT * FROM Departments WHERE ISNULL(Id, 0) = ISNULL(@ParentId, 0)
+	                     	SET @ParentId = (SELECT ParentId FROM Departments WHERE Id = @ParentId)
+                         END;
 
-                    if (department.Employees == null)
-                        department.Employees = new List<Employee>();
+                         SELECT * FROM #parents";
 
-                    department.Employees.Add(e);
-                    return department;
-                }, cancellationToken);
+            var multi = await DbConnection.QueryMultipleAsync(sql);
 
-            return dictionary.FirstOrDefault().Value;
+            var children = multi.Read<DepartmentSimpleDto>();
+            var parents = multi.Read<DepartmentSimpleDto>().Reverse();
+            return new DepartmentSimpleChildrenAndParentsDto(children, parents);
+        }
+
+        public async Task<IEnumerable<DepartmentDto>> FindAllWithEmployeeCountAsync()
+        {
+            var sql = $@"SELECT d.*, count(e.Id) as EmployeeCount, AVG(e.Salary) AS AverageSalary
+                         FROM Departments d LEFT JOIN Employees e ON d.Id = e.DepartmentID
+                         GROUP BY d.Id, d.ParentId, d.Name";
+
+            var departments = await DbConnection.QueryAsync<DepartmentDto>(sql);
+            // test values
+            #region
+            //var departments = new List<DepartmentDto>() {
+            //    new DepartmentDto() { Id = 1, ParentId = 2 },
+            //    new DepartmentDto() { Id = 2, ParentId = 0 },
+            //    new DepartmentDto() { Id = 3, ParentId = 2 },
+            //    new DepartmentDto() { Id = 4, ParentId = 6 },
+            //    new DepartmentDto() { Id = 5, ParentId = 6 },
+            //    new DepartmentDto() { Id = 6, ParentId = 0 },
+            //    new DepartmentDto() { Id = 7, ParentId = 0 },
+            //    new DepartmentDto() { Id = 8, ParentId = 7 },
+            //    new DepartmentDto() { Id = 9, ParentId = 7 },
+            //    new DepartmentDto() { Id = 10, ParentId = 5 },
+            //};
+            #endregion 
+
+            return MappingChildren(departments);
+        }
+
+        private static IEnumerable<DepartmentDto> MappingChildren(IEnumerable<DepartmentDto> departments)
+        {
+            var groups = departments.GroupBy(x => x.ParentId).ToList();
+            foreach (var group in groups)
+            {
+                if (group.Key == 0)
+                {
+                    continue;
+                }
+                departments.First(d => d.Id == group.Key).Children = group.ToList();
+            }
+            return departments.Where(x => x.ParentId == 0);
         }
     }
 }

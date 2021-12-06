@@ -1,0 +1,61 @@
+.empty-section {
+  width: 100vw;
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .form-wrap {
+    width: max-content;
+    height: max-content;
+    position: relative;
+
+    .auth-form {
+      width: max-content;
+      height: max-content;
+
+      .password-group {
+        position: relative;
+
+        .password-input {
+          width: calc(100% - 24px);
+        }
+
+        .show-password-checkbox-group {
+          display: inline-block;
+          width: 30px;
+          height: 38px;
+          position: absolute;
+          right: 0;
+          top: 0;
+          background-color: #fff;
+          border: 1px #ced4da solid;
+          border-top-right-radius: 3px;
+          border-bottom-right-radius: 3px;
+          color: #000;
+
+          .show-password-checkbox {
+            position: absolute;
+            left: 65%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+          }
+
+          .checkbox-icon {
+            pointer-events: none;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+          }
+        }
+      }
+    }
+
+    .show-password {
+      position: absolute;
+    }
+  }
+}

@@ -5,73 +5,77 @@ using Dapper;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Anresh.DataAccess.Repositories
 {
     public sealed class EmployeeRepository : GenericRepository<Employee, int>, IEmployeeRepository
     {
-        public EmployeeRepository(IDbConnection db) : base(db, TableNames.Employees)
+        public EmployeeRepository(IDbConnection db) : base(db)
         {
         }
-        public async Task<List<Employee>> FindByDepartmentId(int id, CancellationToken cancellationToken)
+
+        public async Task<IEnumerable<EmployeeDto>> FindAllByDepartmentIdWithDepartmentNameAsync(int id)
         {
-            var data = await DbConnection.QueryAsync<Employee>($"SELECT * FROM {TableName} WHERE DepartmentID = {id}", cancellationToken);
-            return data.ToList();
+            var sql = $@"SELECT e.*, d.Name as DepartmentName
+                         FROM Employees e LEFT OUTER JOIN Departments d ON e.DepartmentID = d.Id
+                         WHERE e.DepartmentID = @id
+                         GROUP BY e.Id, e.LastName, e.FirstName, e.MiddleName, e.Salary, e.DepartmentID, d.Name";
+
+            return await DbConnection.QueryAsync<EmployeeDto>(sql, new { id });
         }
 
-        public async Task TransferToTheDepartment(int oldDepartmentId, int newDepartmentId, CancellationToken cancellationToken)
+        public async Task TransferToDepartmentAsync(int oldDepartmentId, int newDepartmentId)
         {
-            await DbConnection.QueryAsync<Employee>($"UPDATE {TableName} SET DepartmentId = {newDepartmentId} WHERE DepartmentId = {oldDepartmentId}", cancellationToken);
-        }
-        public async Task DeleteByDepartmentId(int id, CancellationToken cancellation)
-        {
-            await DbConnection.ExecuteAsync($"delete from {TableName} where DepartmentId = {id}", cancellation);
+            var sql = $"UPDATE {TableName} SET DepartmentId = @newDepartmentId WHERE DepartmentId = @oldDepartmentId";
+            await DbConnection.QueryAsync<Employee>(sql, new { newDepartmentId, oldDepartmentId });
         }
 
-        public async Task<IEnumerable<EmployeeDTO>> FindAllWithDepartment(CancellationToken cancellationToken)
+        public async Task DeleteByDepartmentIdAsync(int id)
         {
-            var sql = $@"SELECT * FROM {TableNames.Employees} e 
-                        LEFT JOIN {TableNames.Departments} d 
-                        ON d.Id = e.DepartmentId 
-                        ORDER BY e.Id";
-
-            var employees = await DbConnection.QueryAsync<EmployeeDTO, Department, EmployeeDTO>(sql, (employee, department) => { 
-                employee.Department = department; return employee; 
-            }, cancellationToken);
-
-            return employees.ToList();
+            var sql = $"delete from {TableName} where DepartmentId = @id";
+            await DbConnection.ExecuteAsync(sql, new { id });
         }
 
-        public async Task<IEnumerable<EmployeeDTO>> FindByDepartmentIdWithDepartment(int id, CancellationToken cancellationToken)
+        public async Task<IEnumerable<EmployeeDto>> FindWithDepartmentNameAndSkillsAsync(PageParams pageParams, int? departmentId)
         {
-            var sql = $@"SELECT * FROM {TableNames.Employees} e 
-                        LEFT JOIN {TableNames.Departments} d 
-                        ON e.DepartmentId = d.Id 
-                        WHERE e.DepartmentId = {id} 
-                        ORDER BY e.Id";
+            var sql = $@"CREATE TABLE #EmployeesDetails
+                         (Id INT, FirstName NVARCHAR(20), LastName NVARCHAR(20), MiddleName NVARCHAR(20),
+                         DepartmentID INT, Salary DECIMAL, DepartmentName  NVARCHAR(20), SkillsCount INT)
 
-            var employees = await DbConnection.QueryAsync<EmployeeDTO, Department, EmployeeDTO>(sql, (employee, department) => {
-                employee.Department = department; return employee;
-            }, cancellationToken);
+                         INSERT INTO #EmployeesDetails
+                         SELECT e.*, d.Name as DepartmentName, count(es.Id) as SkillsCount
+                         FROM Employees e JOIN Departments d ON e.DepartmentID = d.Id
+                         LEFT JOIN EmployeesSkills es ON e.Id = es.EmployeeId
+
+                         {(departmentId is not null ? $"WHERE e.DepartmentID = {departmentId}" : "")}
+
+                         GROUP BY e.Id, e.FirstName, e.LastName, e.MiddleName, e.Salary, e.DepartmentID, d.Name
+                         ORDER BY {pageParams.OrderBy} {pageParams.AscDesc}
+                         OFFSET {pageParams.Skip} ROWS FETCH NEXT {pageParams.Take} ROWS ONLY;
+                         
+                         SELECT * FROM #EmployeesDetails;
+                         
+                         SELECT e.Id as EmployeeId, s.Id as SkillId ,s.Name
+                         FROM #EmployeesDetails e 
+                         JOIN EmployeesSkills es ON e.Id = es.EmployeeId
+                         JOIN Skills s ON es.SkillId = s.Id; ";
+
+            var multi = await DbConnection.QueryMultipleAsync(sql).ConfigureAwait(false);
+
+            var employees = multi.Read<EmployeeDto>().ToList();
+            var groupSkills = multi.Read<SkillDto>().GroupBy(x => x.EmployeeId,
+                                                             skill => new Skill()
+                                                             {
+                                                                 Id = skill.SkillId,
+                                                                 Name = skill.Name
+                                                             }).ToList();
+            groupSkills.ForEach(skills =>
+                                employees.First(e => e.Id == skills.Key)
+                               .Skills = skills.ToList());
 
             return employees;
         }
 
-        public async Task<EmployeeDTO> FindByIdWithDepartment(int id, CancellationToken cancellationToken)
-        {
-            var sql = $@"SELECT * FROM {TableNames.Employees} e 
-                        LEFT JOIN {TableNames.Departments} d 
-                        ON e.DepartmentId = d.Id 
-                        WHERE e.Id = {id} 
-                        ORDER BY e.Id";
-
-            var employee = await DbConnection.QueryAsync<EmployeeDTO, Department, EmployeeDTO>(sql, (employee, department) => { 
-                employee.Department = department; return employee; 
-            }, cancellationToken);
-
-            return employee.FirstOrDefault();
-        }
     }
 }

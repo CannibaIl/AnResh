@@ -1,17 +1,17 @@
 ﻿using Anresh.Api.Controllers.Requests.Employee;
-using Anresh.Application.Services.Employee.Contracts;
 using Anresh.Application.Services.Employee.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Threading;
 using System.Threading.Tasks;
+using Anresh.Domain.DTO;
 
 namespace Anresh.Controllers
 {
     [Route("api/employee")]
     [ApiController]
+    [Authorize]
     public class EmployeeController : Controller
     {
         private readonly IEmployeeService _employeeService;
@@ -19,78 +19,90 @@ namespace Anresh.Controllers
         {
             _employeeService = employeeService;
         }
-        [HttpGet]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
-        {
-            return Ok(await _employeeService.GetAll(cancellationToken));
-        }
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([Required] int id, CancellationToken cancellationToken)
-        {
-            return Ok(await _employeeService.GetById(id, cancellationToken));
-        }
-        [HttpGet("department/{id}")]
 
-        public async Task<IActionResult> GetByDepartament([Required] int id, CancellationToken cancellationToken)
+        //[HttpGet]
+        //public async Task<IActionResult> GetAllAsync()
+        //{
+        //    return Ok(await _employeeService.GetAllAsync());
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> GetPagedAsync([FromQuery] PageParams pageParams)
         {
-            return Ok(await _employeeService.GetByDepartamentId(id, cancellationToken));
+            return Ok(await _employeeService.GetPagedAsync(pageParams));
         }
+
+        [HttpGet("totalRows")]
+        public async Task<IActionResult> GetTotalRows()
+        {
+            return Ok(await _employeeService.GetTotalRows());
+        }
+
+        [HttpGet("all/department/{id}")]
+        public async Task<IActionResult> GetByDepartamentAsync(int id)
+        {
+            return Ok(await _employeeService.GetAllByDepartamentIdAsync(id));
+        }
+
+        [HttpGet("department/{id}")]
+        public async Task<IActionResult> GetByDepartamentIdPagedAsyncAsync([FromQuery] PageParams pageParams ,int id)
+        {
+            return Ok(await _employeeService.GetByDepartamentIdPagedAsyncAsync(pageParams, id));
+        }
+
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        public async Task<IActionResult> Create([FromBody] CreateEmployeeRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> CreateAsync([FromBody] CreateEmployeeRequest request)
         {
-            var response = await _employeeService.Create(new Create.Request()
+            var response = await _employeeService.CreateAsync(new EmployeeDto()
             {
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                MidleName = request.MidleName,
+                MiddleName = request.MiddleName,
                 DepartmentId = request.DepartmentId,
-                Salary = request.Salary
-            }, cancellationToken);
+                Salary = request.Salary,
+                Skills = request.Skills
+            });
             return Created($"api/employee/{response.Id}", new { response });
         }
 
         [HttpPut]
-        public async Task<IActionResult> Update([FromBody] UpdateEmployeeRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateAsync([FromBody] UpdateEmployeeRequest request)
         {
-           var response = await _employeeService.Update(new Update.Request()
-           {
-               Id = request.Id,
-               FirstName = request.FirstName,
-               LastName = request.LastName,
-               MidleName = request.MidleName,
-               DepartmentId = request.DepartmentId,
-               Salary = request.Salary
-           }, cancellationToken);
-           return Ok(response);
-        }
-        [HttpPut("transferToTheDepartment")]
-        public async Task<IActionResult> TransferToTheDepartment([FromBody][Required] TransferToTheDepartmentRequest request, CancellationToken cancellationToken)
-        {
-            await _employeeService.TransferToTheDepartment(request.OldDepartmentId, request.NewDepartmentId, cancellationToken);
-            return Ok(request.NewDepartmentId);
+            var response = await _employeeService.UpdateAsync(new EmployeeDto()
+            {
+                Id = request.Id,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                MiddleName = request.MiddleName,
+                DepartmentId = request.DepartmentId,
+                Salary = request.Salary,
+                Skills = request.Skills
+            });
+            return Ok(response);
         }
 
-        [HttpDelete]
+        [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> Delete([FromBody] int id, CancellationToken cancellationToken)
+        public async Task<IActionResult> DeleteAsync([FromRoute] int id)
         {
-            await _employeeService.Delete(id, cancellationToken);
-            return NoContent();
-        }
-        [HttpDelete("deleteList")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> DeleteList([FromBody] List<int> listId, CancellationToken cancellationToken)
-        {
-            await _employeeService.DeleteList(listId, cancellationToken);
+            await _employeeService.DeleteAsync(id);
             return NoContent();
         }
 
-        [HttpDelete("deleteByDepartment")]
+        [HttpDelete("multiple")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> DeleteAllByDepartmentId([FromBody][Required] int id, CancellationToken cancellationToken)
+        public async Task<IActionResult> DeleteMultipleAsync([FromBody] List<int> listId)
         {
-            await _employeeService.DeleteAllByDepartmentId(id, cancellationToken);
+            await _employeeService.DeleteMultipleAsync(listId);
+            return NoContent();
+        }
+
+        [HttpDelete("department/{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> DeleteAllByDepartmentIdAsync([FromRoute] int id)
+        {
+            await _employeeService.DeleteAllByDepartmentIdAsync(id);
             return NoContent();
         }
     }

@@ -1,11 +1,10 @@
-﻿using Anresh.Application.Services.Employee.Contracts;
-using Anresh.Application.Services.Employee.Interfaces;
+﻿using Anresh.Application.Services.Employee.Interfaces;
 using Anresh.Domain.DTO;
 using Anresh.Domain.Repositories;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+
 
 namespace Anresh.Application.Services.Employee.Implementations
 {
@@ -13,98 +12,115 @@ namespace Anresh.Application.Services.Employee.Implementations
     {
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IDepartmentRepository _departmentRepository;
+        private readonly IEmployeeSkillRepisitory _employeeSkillRepisitory;
+
         public EmployeeService(
             IEmployeeRepository employeeRepository,
-            IDepartmentRepository departmentRepository
+            IDepartmentRepository departmentRepository,
+            IEmployeeSkillRepisitory employeeSkillRepisitory
             )
         {
             _employeeRepository = employeeRepository;
             _departmentRepository = departmentRepository;
+            _employeeSkillRepisitory = employeeSkillRepisitory;
         }
 
-        public async Task<EmployeeDTO> Create(Create.Request request, CancellationToken cancellationToken)
+        public async Task<IEnumerable<EmployeeDto>> GetAllByDepartamentIdAsync(int id)
         {
-            if (await _departmentRepository.FindById(request.DepartmentId, cancellationToken) == null)
+            return await _employeeRepository.FindAllByDepartmentIdWithDepartmentNameAsync(id);
+        }
+
+        public async Task<EmployeeDto> CreateAsync(EmployeeDto request)
+        {
+            if (await _departmentRepository.IsExistsAsync(request.DepartmentId) is false)
             {
-                throw new KeyNotFoundException($"Отдел с id:{request.DepartmentId} не найден");
+                throw new KeyNotFoundException($"Department with id: { request.DepartmentId } not found");
+            }
+            request.Id = await _employeeRepository.SaveAsync(new Domain.Employee(request));
+
+            if (request.Skills.Count > 0)
+            {
+                await _employeeSkillRepisitory.SaveMultipleAsync(request.Skills, request.Id);
             }
 
-            var employe = new Domain.Employee()
-            {
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                MidleName = request.MidleName,
-                DepartmentId = request.DepartmentId,
-                Salary = request.Salary,
-            };
-            var id = await _employeeRepository.Save(employe);
-
-            return await _employeeRepository.FindByIdWithDepartment(id, cancellationToken);
+            return request;
         }
-        public async Task<EmployeeDTO> Update(Update.Request request, CancellationToken cancellationToken)
+
+        public async Task<EmployeeDto> UpdateAsync(EmployeeDto request)
         {
-            if (await _employeeRepository.FindById(request.Id, cancellationToken) == null)
+            if (await _employeeRepository.IsExistsAsync(request.Id) is false)
             {
-                throw new KeyNotFoundException($"Сотрудник с id:{request.Id} не найден");
+                throw new KeyNotFoundException($"Employee with id: { request.Id } not found");
+            }
+            await _employeeRepository.UpdateAsync(new Domain.Employee(request));
+
+            var employeeSkills = await _employeeSkillRepisitory.FindByEmployeeIdAsync(request.Id);
+            
+            if (request.Skills.Count > 0)
+            {
+                var deleteSkillsList = employeeSkills.Where(x => request.Skills.Any(r => r.Id == x.SkillId) is false).Select(x => x.Id);
+                if (deleteSkillsList.Any())
+                {
+                    await _employeeSkillRepisitory.DeleteMultipleAsync(deleteSkillsList);
+                }
+
+                var addSkillsList = request.Skills.Where(x => employeeSkills.Any(e => e.SkillId == x.Id) is false).ToList();
+                if (addSkillsList.Any())
+                {
+                    await _employeeSkillRepisitory.SaveMultipleAsync(addSkillsList, request.Id);
+                } 
+            }
+            else if (employeeSkills.Any())
+            {
+                await _employeeSkillRepisitory.DeleteMultipleAsync(employeeSkills.Select(x => x.Id));
             }
 
-            var employe = new Domain.Employee()
-            {
-                Id = request.Id,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                MidleName = request.MidleName,
-                DepartmentId = request.DepartmentId,
-                Salary = request.Salary
-            };
-            await _employeeRepository.Update(employe);
+            return request;
+        }
 
-            return await _employeeRepository.FindByIdWithDepartment(request.Id, cancellationToken);
-        }
-        public async Task Delete(int id, CancellationToken cancellationToken)
+        public async Task DeleteAsync(int id)
         {
-            if (await _employeeRepository.FindById(id, cancellationToken) == null)
+            if (await _employeeRepository.IsExistsAsync(id) is false)
             {
-                throw new KeyNotFoundException($"Сотрудник с {id} не найден");
+                throw new KeyNotFoundException($"Employee with id: { id } not found");
             }
-            await _employeeRepository.Delete(id, cancellationToken);
+            await _employeeRepository.DeleteAsync(id);
         }
-        public async Task DeleteList(List<int> listId, CancellationToken cancellationToken)
+
+        public async Task DeleteMultipleAsync(IEnumerable<int> ids)
         {
-            var notFoundStringId = "";
-            foreach (var id in listId)
-            {
-                if(await _employeeRepository.FindById(id, cancellationToken) == null) 
-                    notFoundStringId += $"{id}, ";
-                else
-                    await _employeeRepository.Delete(id, cancellationToken);
-            }
-            if (notFoundStringId != "")
-                throw new KeyNotFoundException($"Сотрудники с id: {notFoundStringId} не найдены");
+            await _employeeRepository.DeleteMultipleAsync(ids);
         }
-        public async Task<Domain.Employee> GetById(int id, CancellationToken cancellationToken)
+
+        public async Task<Domain.Employee> GetByIdAsync(int id)
         {
-            var employe = await _employeeRepository.FindById(id, cancellationToken);
+            var employe = await _employeeRepository.FindByIdAsync(id);
             if (employe == null)
-                throw new KeyNotFoundException($"Сотрудник с {id} не найден");
-
+            {
+                throw new KeyNotFoundException($"Employee with id: { id } not found");
+            }
             return employe;
-        }
-        public async Task<IEnumerable<EmployeeDTO>> GetAll(CancellationToken cancellationToken)
+        } 
+
+        public async Task<IEnumerable<EmployeeDto>> GetPagedAsync(PageParams pageParams)
         {
-            return await _employeeRepository.FindAllWithDepartment(cancellationToken);
+            return await _employeeRepository.FindWithDepartmentNameAndSkillsAsync(pageParams);
         }
-        public async Task<IEnumerable<EmployeeDTO>> GetByDepartamentId(int id, CancellationToken cancellationToken)
+
+        public async Task<IEnumerable<EmployeeDto>> GetByDepartamentIdPagedAsyncAsync(PageParams pageParams, int id)
         {
-            return await _employeeRepository.FindByDepartmentIdWithDepartment(id, cancellationToken);
+            return await _employeeRepository.FindWithDepartmentNameAndSkillsAsync(pageParams, id);
         }
-        public async Task TransferToTheDepartment(int oldDepartmentId, int newDepartmentId, CancellationToken cancellationToken)
+
+        public async Task DeleteAllByDepartmentIdAsync(int id)
         {
-            await _employeeRepository.TransferToTheDepartment(oldDepartmentId, newDepartmentId, cancellationToken);
+            await _employeeRepository.DeleteByDepartmentIdAsync(id);
         }
-        public async Task DeleteAllByDepartmentId(int id, CancellationToken cancellationToken)
+
+        public async Task<int> GetTotalRows()
         {
-            await _employeeRepository.DeleteByDepartmentId(id, cancellationToken);
+            return await _employeeRepository.GetTotalRows();
         }
+
     }
 }

@@ -1,16 +1,21 @@
-﻿using Anresh.Application.Services.Department.Contracts;
+﻿using Anresh.Domain.DTO;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Anresh.Application.Services.Department.Interfaces
 {
     public interface IDepartmentService
     {
-        Task<IEnumerable<Domain.DTO.DepartmentDTO>> GetAll(CancellationToken cancellationToken);
-        Task<IEnumerable<Domain.Department>> GetAllLight(CancellationToken cancellationToken);
-        Task<Domain.DTO.DepartmentDTO> Create(Create.Request request, CancellationToken cancellationToken);
-        Task<Domain.DTO.DepartmentDTO> Update(Update.Request request, CancellationToken cancellationToken);
-        Task Delete(int id, CancellationToken cancellationToken);
+        Task<Domain.Department> GetSimpleByIdAsync(int id);
+        Task<IEnumerable<DepartmentDto>> GetPagedAsync(PageParams pageParams);
+        Task<IEnumerable<Domain.Department>> GetAllSimpleAsync();
+        Task<IEnumerable<DepartmentSimpleDto>> GetSimpleByParentIdAsync(int parentId);
+        Task<DepartmentSimpleChildrenAndParentsDto> GetSimpleParentsTreeAndParentChildrenByChildIdAsync(int childId);
+        Task<IEnumerable<DepartmentDto>> GetAllAsync();
+        Task<Domain.Department> CreateAsync(Domain.Department request);
+        Task<Domain.Department> UpdateAsync(Domain.Department request);
+        Task DeleteAsync(int id);
+        Task MoveEmployeesAsync(int oldDepartmentId, int newDepartmentId);
+        Task<int> GetTotalRows();
     }
 }
