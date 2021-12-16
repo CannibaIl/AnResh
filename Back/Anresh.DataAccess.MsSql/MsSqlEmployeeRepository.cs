@@ -7,11 +7,11 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Anresh.DataAccess.Repositories
+namespace Anresh.DataAccess.MsSql.Repositories
 {
-    public sealed class EmployeeRepository : GenericRepository<Employee, int>, IEmployeeRepository
+    public class MsSqlEmployeeRepository : MsSqlGenericRepository<Employee, int>, IEmployeeRepository
     {
-        public EmployeeRepository(IDbConnection db) : base(db)
+        public MsSqlEmployeeRepository(IDbConnection db) : base(db)
         {
         }
 

@@ -1,19 +1,14 @@
 ﻿using Anresh.Domain;
 using Anresh.Domain.Repositories;
 using Dapper;
-using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace Anresh.DataAccess.Repositories
+namespace Anresh.DataAccess.MsSql.Repositories
 {
-    public sealed class UserRepository : GenericRepository<User, int>, IUserRepository
+    public class PgSqlUserRepository : PgSqlGenericRepository<User, int>, IUserRepository
     {
-        public UserRepository(IDbConnection db) : base(db)
+        public PgSqlUserRepository(IDbConnection db) : base(db)
         {
         }
 
@@ -51,7 +46,7 @@ namespace Anresh.DataAccess.Repositories
         public async Task ChangeRoleAsync(int id, string role)
         {
             var sql = @"UPDATE Users SET Role = @role WHERE Id = @id";
-            await DbConnection.ExecuteAsync(sql, new { id , role});
+            await DbConnection.ExecuteAsync(sql, new { id, role });
         }
 
         public async Task RestorePasswordAsync(int id, byte[] hash, byte[] salt)

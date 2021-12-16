@@ -7,10 +7,11 @@
     public class ConnectionStrings
     {
         public string SqlServerDb {  get; set; }
+        public string PostgreServerDb {  get; set; }
     }
     public class MailSetings
     {
-        public string Email {  get; set; }
+        public string Email {  get; set; }  
         public string Password {  get; set; }
         public string Name {  get; set; }
         public string Smtp {  get; set; }
@@ -22,6 +23,7 @@
         public string FrontUri {  get; set; }
         public string FilePath { get; set; }
         public Token Token {  get; set; }
+        public string ActiveDb { get; set; }
         public ConnectionStrings ConnectionStrings {  get; set; }
         public MailSetings MailSettings {  get; set; }
     }

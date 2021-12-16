@@ -2,10 +2,7 @@
 using Anresh.Application.Services.User.Contracts;
 using Anresh.Application.Services.User.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Anresh.Api.Controllers
@@ -32,7 +29,7 @@ namespace Anresh.Api.Controllers
             });
             return Ok(result);
         }
-        
+
         [HttpPost("confirm")]
         [AllowAnonymous]
         public async Task<IActionResult> EmailConfirmAsync([FromQuery] EmailConfirmRequest request)
@@ -73,7 +70,7 @@ namespace Anresh.Api.Controllers
         }
 
         [HttpPut("role")]
-        public async Task<IActionResult> UpdateAsync( [FromBody] ChangeRoleRequest request)
+        public async Task<IActionResult> UpdateAsync([FromBody] ChangeRoleRequest request)
         {
             await _userService.ChangeRoleAsync(request.Id, request.Role);
             return Ok();
@@ -85,7 +82,7 @@ namespace Anresh.Api.Controllers
         {
             var result = await _userService.SendRestorePasswordEmailAsync(email);
             return Ok(result);
-        }   
+        }
 
         [HttpPost("RestorePassword")]
         [AllowAnonymous]

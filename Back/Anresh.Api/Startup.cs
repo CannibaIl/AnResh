@@ -1,13 +1,15 @@
+using Anresh.Api.DataAccess;
 using Anresh.Application;
-using Anresh.DataAccess;
+using Anresh.DataAccess.PostgreSql;
+using Anresh.Domain.Repositories;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Text;
 
 namespace Anresh.Api
@@ -54,16 +56,28 @@ namespace Anresh.Api
                     });
                 });
 
-            services.AddControllers().AddFluentValidation(fv => 
+            services.AddControllers().AddFluentValidation(fv =>
             {
                 fv.RegisterValidatorsFromAssemblyContaining<Startup>();
             });
 
             services.AddSwaggerModule();
+            
+            services.AddScoped<DbConnectionFactory>()
+                    .AddScoped((sp) => sp.GetService<DbConnectionFactory>().Create());
 
-            services
-                .AddDataAccessModule()
-                .AddHttpContextAccessor();
+            services.AddScoped<RepositoryFactoryCreator>()
+                    .AddScoped((sp) => sp.GetService<RepositoryFactoryCreator>().Create());
+
+            #region register all repos
+
+            services.AddScoped(sp => sp.GetService<IRepositoryFactory>().CreateDepartmentRepository());
+            services.AddScoped(sp => sp.GetService<IRepositoryFactory>().CreateEmployeeRepository());
+            services.AddScoped(sp => sp.GetService<IRepositoryFactory>().CreateEmployeeSkillRepository());
+            services.AddScoped(sp => sp.GetService<IRepositoryFactory>().CreateSkillRepository());
+            services.AddScoped(sp => sp.GetService<IRepositoryFactory>().CreateUserRepository());
+            #endregion
+
 
             services.AddApplicationModule();
         }
