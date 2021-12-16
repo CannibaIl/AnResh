@@ -63,12 +63,14 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.12" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
+    <PackageReference Include="Npgsql" Version="6.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Anresh.Application\Anresh.Application.csproj" />
-    <ProjectReference Include="..\Anresh.DataAccess\Anresh.DataAccess.csproj" />
+    <ProjectReference Include="..\Anresh.DataAcces.PostgreSql\Anresh.DataAccess.PostgreSql.csproj" />
+    <ProjectReference Include="..\Anresh.DataAccess.MsSql\Anresh.DataAccess.MsSql.csproj" />
   </ItemGroup>
 
 </Project>

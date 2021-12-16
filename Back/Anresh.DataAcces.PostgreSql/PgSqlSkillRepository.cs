@@ -1,14 +1,15 @@
-﻿using Anresh.Domain;
+﻿using Anresh.DataAccess.MsSql.Repositories;
+using Anresh.Domain;
 using Anresh.Domain.Repositories;
 using Dapper;
 using System.Data;
 using System.Threading.Tasks;
 
-namespace Anresh.DataAccess.Repositories
+namespace Anresh.DataAccess.MsSql.Repositories
 {
-    public sealed class SkillRepository : GenericRepository<Skill, int>, ISkillRepository
+    public class PgSqlSkillRepository : PgSqlGenericRepository<Skill, int>, ISkillRepository
     {
-        public SkillRepository(IDbConnection db) : base(db)
+        public PgSqlSkillRepository(IDbConnection db) : base(db)
         {
         }
         public async Task<bool> CheckNameAsync(string name)

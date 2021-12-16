@@ -5,20 +5,20 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
-namespace Anresh.DataAccess.Repositories
+namespace Anresh.DataAccess.MsSql.Repositories
 {
-    public class GenericRepository<TEntity, TId> : IGenericRepository<TEntity, TId> where TEntity : Entity<TId>
+    public abstract class MsSqlGenericRepository<TEntity, TId> : IGenericRepository<TEntity, TId> where TEntity : Entity<TId>
     {
-        protected readonly IDbConnection DbConnection;
         protected string TableName;
-        private protected GenericRepository(IDbConnection dbConnection)
+        protected readonly IDbConnection DbConnection;
+        private protected MsSqlGenericRepository(IDbConnection dbConnection)
         {
             DbConnection = dbConnection;
-            
             var tableAttribute = (TableAttribute)typeof(TEntity).GetCustomAttributes(typeof(TableAttribute), false).FirstOrDefault();
-            if (tableAttribute == null)
+            if (tableAttribute is null)
             {
                 throw new Exception("table attribute not found");
             }

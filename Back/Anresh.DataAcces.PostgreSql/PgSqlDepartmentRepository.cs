@@ -7,11 +7,11 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Anresh.DataAccess.Repositories
+namespace Anresh.DataAccess.MsSql.Repositories
 {
-    public sealed class DepartmentRepository : GenericRepository<Department, int>, IDepartmentRepository
+    public class PgSqlDepartmentRepository : PgSqlGenericRepository<Department, int>, IDepartmentRepository
     {
-        public DepartmentRepository(IDbConnection db) : base(db)
+        public PgSqlDepartmentRepository(IDbConnection dbConnection) : base(dbConnection)
         {
         }
 
@@ -31,6 +31,7 @@ namespace Anresh.DataAccess.Repositories
 
             return await DbConnection.QueryAsync<DepartmentDto>(sql);
         }
+
         public async Task<IEnumerable<DepartmentSimpleDto>> FindSimpleByParentIdAsync(int parentId)
         {
             var sql = $@"SELECT d.*
@@ -72,21 +73,6 @@ namespace Anresh.DataAccess.Repositories
                          GROUP BY d.Id, d.ParentId, d.Name";
 
             var departments = await DbConnection.QueryAsync<DepartmentDto>(sql);
-            // test values
-            #region
-            //var departments = new List<DepartmentDto>() {
-            //    new DepartmentDto() { Id = 1, ParentId = 2 },
-            //    new DepartmentDto() { Id = 2, ParentId = 0 },
-            //    new DepartmentDto() { Id = 3, ParentId = 2 },
-            //    new DepartmentDto() { Id = 4, ParentId = 6 },
-            //    new DepartmentDto() { Id = 5, ParentId = 6 },
-            //    new DepartmentDto() { Id = 6, ParentId = 0 },
-            //    new DepartmentDto() { Id = 7, ParentId = 0 },
-            //    new DepartmentDto() { Id = 8, ParentId = 7 },
-            //    new DepartmentDto() { Id = 9, ParentId = 7 },
-            //    new DepartmentDto() { Id = 10, ParentId = 5 },
-            //};
-            #endregion 
 
             return MappingChildren(departments);
         }

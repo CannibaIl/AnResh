@@ -9,7 +9,7 @@ namespace Anresh.Controllers
 {
     [Route("api/skill")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class SkillController : Controller
     {
         private readonly ISkillService _skillService;
