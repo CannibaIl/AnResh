@@ -122,5 +122,9 @@ namespace Anresh.Application.Services.Employee.Implementations
             return await _employeeRepository.GetTotalRows();
         }
 
+        public async Task<EmployeesFiltredPage> GetFiltredWithDepartmentNameAndSkillsAsync(EmployeesFilter employeesFilter)
+        {
+            return await _employeeRepository.FindFiltredWithDepartmentNameAndSkillsAsync(employeesFilter);
+        }
     }
 }

@@ -154,7 +154,7 @@ button {
   tbody {
     tr{
       td:first-child {
-        background-color: #404958;
+        // background-color: #404958;
       }
       &:first-child {
         td:nth-child(2) {
@@ -163,7 +163,7 @@ button {
       }
       &:last-child {
         &:first-child {
-          background-color: #404958;
+          // background-color: #404958;
         }
       }
     }

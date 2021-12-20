@@ -52,7 +52,7 @@ namespace Anresh.DataAccess.MsSql.Repositories
 
                          GROUP BY e.Id, e.FirstName, e.LastName, e.MiddleName, e.Salary, e.DepartmentID, d.Name
                          ORDER BY {pageParams.OrderBy} {pageParams.AscDesc}
-                         OFFSET {pageParams.Skip} ROWS FETCH NEXT {pageParams.Take} ROWS ONLY;
+                         OFFSET {pageParams.Skip} ROWS FETCH NEXT {pageParams.take} ROWS ONLY;
                          
                          SELECT * FROM #EmployeesDetails;
                          
@@ -77,5 +77,9 @@ namespace Anresh.DataAccess.MsSql.Repositories
             return employees;
         }
 
+        public Task<EmployeesFiltredPage> FindFiltredWithDepartmentNameAndSkillsAsync(EmployeesFilter employeesFilter)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
