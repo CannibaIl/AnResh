@@ -77,5 +77,9 @@ namespace Anresh.DataAccess.MsSql.Repositories
             return employees;
         }
 
+        public Task<EmployeesFiltredPage> FindFiltredWithDepartmentNameAndSkillsAsync(EmployeesFilter employeesFilter)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace Anresh.Controllers
 {
     [Route("api/employee")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class EmployeeController : Controller
     {
         private readonly IEmployeeService _employeeService;
@@ -25,6 +25,11 @@ namespace Anresh.Controllers
         //{
         //    return Ok(await _employeeService.GetAllAsync());
         //}
+        [HttpPost("filtred")]
+        public async Task<IActionResult> GetFiltredWithDepartmentNameAndSkillsAsync([FromBody] EmployeesFilter employeesFilter)
+        {
+            return Ok(await _employeeService.GetFiltredWithDepartmentNameAndSkillsAsync(employeesFilter));
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetPagedAsync([FromQuery] PageParams pageParams)

@@ -9,6 +9,7 @@ namespace Anresh.Application.Services.Employee.Interfaces
         Task<IEnumerable<EmployeeDto>> GetAllByDepartamentIdAsync(int id);
         Task<IEnumerable<EmployeeDto>> GetPagedAsync(PageParams pageConstructor);
         Task<IEnumerable<EmployeeDto>> GetByDepartamentIdPagedAsyncAsync(PageParams pageParams, int id);
+        Task<EmployeesFiltredPage> GetFiltredWithDepartmentNameAndSkillsAsync(EmployeesFilter employeesFilter);
         Task<Domain.Employee> GetByIdAsync(int id);
         Task<EmployeeDto> CreateAsync(EmployeeDto request);
         Task<EmployeeDto> UpdateAsync(EmployeeDto request);
