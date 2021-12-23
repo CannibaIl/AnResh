@@ -27,7 +27,7 @@ namespace Anresh.DataAccess.MsSql.Repositories
                          FROM Departments d LEFT OUTER JOIN Employees e ON d.Id = e.DepartmentID
                          GROUP BY d.Id, d.ParentId, d.Name
                          ORDER BY {pageParams.OrderBy} {pageParams.AscDesc}
-                         OFFSET {pageParams.Skip} ROWS FETCH NEXT {pageParams.take} ROWS ONLY;";
+                         OFFSET {pageParams.Skip} ROWS FETCH NEXT {pageParams.Take} ROWS ONLY;";
 
             return await DbConnection.QueryAsync<DepartmentDto>(sql);
         }

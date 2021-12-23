@@ -9,8 +9,8 @@ namespace Anresh.Domain.DTO
 {
     public class EmployeesFiltredPage
     {
-        public IEnumerable<EmployeeDto> Employees {  get; set; }
+        public IEnumerable<EmployeeDto> Employees {  get; set; } = new List<EmployeeDto>();
         public int TakeCount { get; set; }
-        public int Total {  get; set; }
+        public int TotalCount {  get; set; }
     }
 }

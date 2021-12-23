@@ -8,54 +8,44 @@
       ref="deleteEmployeeModal"
       @row-updated="updateDataTable"
     />
-    <div class="filter-wrap">
-    <div class="filter">
 
-        <b-form-group label="First name">
-          <b-form-input
-            type="text"
-            debounce="1000"
-            v-model="pageFilter.firstName"
-          ></b-form-input>
-        </b-form-group>
+    <b-button v-b-toggle.collapse-1 class="mb-3 custom-btn"
+      >Filter
+      <fa icon="filter" style="transform: scale(0.8)" />
+    </b-button>
+    <b-collapse id="collapse-1" class="mt-2 filter-wrap">
+      <div class="left-side-filter">
+        <div class="filter-inputs">
+          <b-form-group label="First name">
+            <b-form-input
+              type="text"
+              debounce="1000"
+              v-model="pageFilter.firstName"
+            ></b-form-input>
+          </b-form-group>
 
-        <b-form-group label="Min salary">
-          <b-form-input
-            type="number"
-            step="1"
-            min="0"
-            debounce="1000"
-            v-model="pageFilter.minSalary"
-          ></b-form-input>
-        </b-form-group>
+          <b-form-group label="Min salary">
+            <b-form-input
+              type="number"
+              step="1"
+              min="0"
+              debounce="1000"
+              v-model="pageFilter.minSalary"
+            ></b-form-input>
+          </b-form-group>
 
-        <b-form-group label="Max salary">
-          <b-form-input
-            type="number"
-            step="1"
-            min="0"
-            debounce="1000"
-            v-model="pageFilter.maxSalary"
-          ></b-form-input>
-        </b-form-group>
+          <b-form-group label="Max salary">
+            <b-form-input
+              type="number"
+              step="1"
+              min="0"
+              debounce="1000"
+              v-model="pageFilter.maxSalary"
+            ></b-form-input>
+          </b-form-group>
+        </div>
 
-        
-
-        <b-form-group label="Skills:">
-          <ul class="select-skill">
-            <li v-for="skill in skills" :key="skill.id">
-              <b-form-checkbox
-                v-model="pageFilter.ListSkillsId"
-                :value="skill.id"
-                >{{ skill.name }}</b-form-checkbox
-              >
-            </li>
-          </ul>
-        </b-form-group>
-    </div>
-    </div>
-
-    <b-form-group class="department-parents-wrap">
+        <b-form-group class="department-filter department-parents-wrap">
           <label @click="setDepartmentFilter(null, null)">/ departaments</label>
           <label
             class="d-inline mr-1"
@@ -75,6 +65,23 @@
             </li>
           </ul>
         </b-form-group>
+      </div>
+      <b-form-group label="Skills:" class="ml-3">
+        <div class="select-skill-wrap">
+          <div
+            class="select-skill-inner"
+            v-for="skill in skills"
+            :key="skill.id"
+          >
+            <b-form-checkbox
+              v-model="pageFilter.ListSkillsId"
+              :value="skill.id"
+              >{{ skill.name }}</b-form-checkbox
+            >
+          </div>
+        </div>
+      </b-form-group>
+    </b-collapse>
 
     <b-button
       button
@@ -86,21 +93,24 @@
       <fa icon="plus" style="transform: scale(0.8)" /> Add
     </b-button>
 
-    
     <div v-if="isBusy || hasEmployees" class="big-table-wrap table-responsive">
       <div class="mb-2 d-flex flex-wrap justify-content-between">
         <div class="d-flex">
           <b-button
-          v-if="isAdmin"
-          button
-          @click.prevent="handleCreateEmployee()"
-          class="custom-btn btn primary mr-2 mt-2"
-          variant="primary"
-          ><fa icon="plus" style="transform: scale(0.8)" /> Add</b-button
-        >
-        <h4 v-show="totalRows !== null" style="color: #fff; margin-top: 13px; margin-left: 10px;">Found {{totalRows}} employees</h4>
+            v-if="isAdmin"
+            button
+            @click.prevent="handleCreateEmployee()"
+            class="custom-btn btn primary mr-2 mt-2"
+            variant="primary"
+            ><fa icon="plus" style="transform: scale(0.8)" /> Add</b-button
+          >
+          <h4
+            v-show="totalRows !== null"
+            style="color: #fff; margin-top: 13px; margin-left: 10px"
+          >
+            Found {{ totalRows }} employees
+          </h4>
         </div>
-        
 
         <b-button
           @click.prevent="handleDeleteSelectedEmployees()"
@@ -174,15 +184,30 @@
         <b-spinner class="align-middle"></b-spinner>
         <strong>Loading...</strong>
       </div>
-
-      <b-pagination
-        class="mt-2 custom-pagination"
-        v-model="currentPage"
-        :total-rows="totalRows"
-        :per-page="pageFilter.take"
-        @page-click="onPageClick"
-      >
-      </b-pagination>
+      <div class="pagination-wrap">
+        <b-pagination
+          v-show="pageFilter.take !== null"
+          class="mt-2 custom-pagination"
+          v-model="currentPage"
+          :total-rows="totalRows"
+          :per-page="pageFilter.take"
+          @page-click="onPageClick"
+        >
+        </b-pagination>
+        <div class="select-pagination-rows">
+          <p>Rows on page</p>
+          <b-form-select
+            v-model="pageFilter.take"
+            class="mb-3 take-pages-select"
+          >
+            <b-form-select-option :value="2">2</b-form-select-option>
+            <b-form-select-option :value="5">5</b-form-select-option>
+            <b-form-select-option :value="10">10</b-form-select-option>
+            <b-form-select-option :value="100">100</b-form-select-option>
+            <b-form-select-option :value="null">All</b-form-select-option>
+          </b-form-select>
+        </div>
+      </div>
     </div>
     <span v-else>There are no employees</span>
   </section>
@@ -211,7 +236,7 @@ export default {
         skip: 0,
         orderBy: "FirstName",
         ascDesc: "asc",
-        departmentID: null,
+        departmentId: null,
         FirstName: "",
         minSalary: null,
         maxSalary: null,
@@ -221,6 +246,22 @@ export default {
   },
 
   watch: {
+    "pageFilter.take"(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        if (this.pageFilter.skip > newVal) {
+          let skipped = Math.floor(this.pageFilter.skip / newVal);
+          this.pageFilter.skip = skipped * newVal;
+          this.currentPage = skipped + 1;
+        } else {
+          this.pageFilter.skip = 0;
+          this.currentPage = 1;
+        }
+      }
+      if (newVal === null) {
+        this.pageFilter.skip = 0;
+        this.currentPage = 1;
+      }
+    },
     pageFilter: {
       async handler(value) {
         if (value.maxSalary === "") {
@@ -258,9 +299,6 @@ export default {
 
   methods: {
     async getEmployees() {
-      this.pageFilter.skip = 0;
-      this.pageFilter.take = 10;
-      this.currentPage = 1;
       const pageQuery = `?Take=${this.pageFilter.take}
                           &Skip=${this.pageFilter.skip}
                           &OrderBy=${this.pageFilter.orderBy}
@@ -271,24 +309,24 @@ export default {
           ? await this.$axios.post("/api/employee/filtred", this.pageFilter)
           : await this.$axios.get("/api/employee/department/" + id + pageQuery);
 
-      this.totalRows = data.total;
-      
+      this.totalRows = data.totalCount;
+
       return data.employees;
     },
 
     async setDepartmentFilter(department, index) {
-      this.pageFilter.departmentId = department === null ? 0 : department.id;
       let { data } = await this.$axios.get(
-        `/api/department/parentId/${this.pageFilter.departmentId}`
+        `/api/department/parentId/${department === null ? 0 : department.id}`
       );
-      this.employees = await this.getEmployees();
 
       if (data.length > 0) {
         this.departments = data;
       }
 
+      this.pageFilter.departmentId = department === null ? null : department.id;
+      this.employees = await this.getEmployees();
+
       if (department === null && index === null) {
-        this.pageFilter.departmentID = 0;
         this.departmentParents = [];
         return;
       }
@@ -322,7 +360,6 @@ export default {
       this.pageFilter.orderBy = orderBy;
       this.pageFilter.skip = 0;
       this.currentPage = 1;
-      this.employees = await this.getEmployees();
     },
 
     handleCreateEmployee() {
@@ -367,51 +404,82 @@ export default {
   }
 }
 .filter-wrap {
-  height: 80px;
-  position: relative;
-  z-index: 10;
-}
-.filter{
-  position: absolute;
+  background-color: #d3d2d2;
+  background-image: url('~/assets/images/anresh-logo.svg');
+  background-repeat: no-repeat;
+  background-size: 100px;
+  background-position-x: 99%;
+  background-position-y: 90%;
+  background-size: auto 70%;
+  padding: 0.5rem;
+  border-radius: 7px;
+  margin-bottom: 1rem;
   display: flex;
-  width: 100%;
-  height: 10px;
-  justify-content: space-between;
-  .form-group  {
-    width: 24%;
-    
-
-    .select-skill  {
-      padding: 0 ;
-      background-color: #fff;
-      height: 38px;
-      transition: .2s;
-      scroll-snap-type: y mandatory;
-      li{   
-        list-style: none;
-        scroll-snap-align: start;
-        div{
-          height: 38px;
-          padding-top: 5px;
-          margin-left: 10px;
-          input {
-            margin-left: 10px;
-          }
-        }
+  .left-side-filter {
+    width: 50%;
+    display: block;
+    .filter-inputs {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      .form-group {
+        width: 32%;
+        margin: 0;
       }
-      &:hover {
-        height: calc(38px * 4)
+    }
+    .department-filter {
+      width: 100%;
+      
+      .select-department {
+        scroll-snap-type: y mandatory;
+        background-color: #fff;
+        height: calc(38px * 4);
+        li {
+          line-height: 38px;
+          scroll-snap-align: start;
+        }
       }
     }
   }
-}
-.select-department  {
-      background: #fff!important;
-      height: calc(38px * 4);
-      scroll-snap-type: y mandatory;
-      li {
-        line-height: 38px;
-        scroll-snap-align: start;
-      }
+  .select-skill-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: start;
+    flex-wrap: wrap;
+    margin-top: -5px;
+    .select-skill-inner {
+      margin: 5px;
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 0.39rem 0.7rem
     }
+  }
+}
+
+.take-pages-select {
+  height: 27px;
+  padding: 0;
+  width: 70px;
+  background-color: #c8c7c7;
+}
+
+.pagination-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 44px;
+  .select-pagination-rows {
+    position: absolute;
+    right: 0;
+    margin: 0.7rem 0;
+    display: flex;
+    height: 20px;
+    align-items: normal;
+    p {
+      margin-right: 10px;
+      color: #fff;
+    }
+  }
+}
 </style>
